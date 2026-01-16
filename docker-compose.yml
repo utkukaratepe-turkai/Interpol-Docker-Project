@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  #1. Container: RabbitMQ (Veri Kuyruğu - Container C)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: interpol-rabbit
+    ports:
+      - "5672:5672" #Kodların İletişim Portu
+      - "15672:15672" #Yönetim paneli portu
+    healthcheck: #RabbitMQ tam açılmadan diğerlerini başlatma
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  #2. Container: Producer (Veri Çeken - Container A)
+  producer:
+    build: ./producer
+    container_name: interpol-producer
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RABBIT_HOST=rabbitmq
+      - QUEUE_NAME=interpol_queue
+      - SLEEP_TIME=60
+      - API_URL=https://ws-public.interpol.int/notices/v1/red?resultPerPage=160&page=1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    # RabbitMQ hazır olana kadar bekle
+    restart: always
+
+  #3. Container: Web/Consumer (Arayüz - Container B)
+  web:
+    build: ./web
+    container_name: interpol-web
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RABBIT_HOST=rabbitmq
+      - QUEUE_NAME=interpol_queue
+      - DB_NAME=interpol.db
+      - FLASK_ENV=development
+    ports:
+      - "5000:5000"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: always
+
+

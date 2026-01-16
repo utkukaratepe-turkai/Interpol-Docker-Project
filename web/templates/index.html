@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Interpol Kırmızı Bülten Takip</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 { color: #d9534f; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+
+        tr:nth-child(even) { background-color: #f2f2f2; }
+
+        /* --- ALARM STİLLERİ --- */
+        /* Eğer alarm varsa satırı kırmızıya boya */
+        .alarm-satiri {
+            background-color: #ffcccc !important;
+            border: 2px solid red !important;
+            color: #a00000;
+            font-weight: bold;
+        }
+
+        /* Yanıp sönen uyarı metni animasyonu */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .yanip-sonen-uyari {
+            color: red;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚨 Interpol Arananlar Listesi (Canlı)</h1>
+    <p>Son Güncelleme: Anlık (Sayfa 30 sn'de bir yenilenir)</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID / Durum</th>
+                <th>İsim</th>
+                <th>Uyruk</th>
+                <th>Veri Zamanı</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for criminal in criminals %}
+
+            <tr class="{% if criminal.alarm == True %}alarm-satiri{% endif %}">
+                <td>
+                    <strong>{{ criminal.entity_id }}</strong>
+
+                    <br><strong style="color:blue;">(Alarm Değişkeni: {{ criminal.alarm }})</strong>
+
+                    {% if criminal.alarm == True %}
+                        <br><span class="yanip-sonen-uyari">🔔 GÜNCELLENDİ!</span>
+                    {% endif %}
+                </td>
+                <td>{{ criminal.name }}</td>
+                <td>{{ criminal.nationalities }}</td>
+                <td>{{ criminal.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
