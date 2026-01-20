@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>Interpol Takip Paneli</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        /* Sadece Yanıp Sönme Animasyonu için minik bir CSS bıraktık */
+        @keyframes blink {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .yanip-sonen-badge {
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container py-5">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-6 fw-bold text-danger">
+                    🚨 Interpol Arananlar
+                </h1>
+                <p class="text-muted mb-0">
+                    <span class="badge bg-secondary">Canlı Veri</span>
+                    Sistem 30 saniyede bir güncellenir.
+                </p>
+            </div>
+            </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="criminal_table" class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col" class="py-3 ps-4">ID / Durum</th>
+                                <th scope="col" class="py-3">İsim</th>
+                                <th scope="col" class="py-3">Uyruk</th>
+                                <th scope="col" class="py-3">Tespit Zamanı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for criminal in criminals %}
+
+                            <tr class="{% if criminal.alarm == True %}table-danger border-danger{% endif %}">
+
+                                <td class="ps-4">
+                                    <span class="fw-bold font-monospace">#{{ criminal.entity_id }}</span>
+
+                                    <div style="font-size: 0.8rem;" class="text-muted mt-1">
+                                        Alarm: {{ criminal.alarm }}
+                                    </div>
+
+                                    {% if criminal.alarm == True %}
+                                        <span class="badge bg-danger yanip-sonen-badge mt-1">
+                                            🔔 GÜNCELLENDİ
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="fw-semibold">{{ criminal.name }}</td>
+
+                                <td>
+                                    <span class="badge bg-info text-dark bg-opacity-25 border border-info">
+                                        {{ criminal.nationalities }}
+                                    </span>
+                                </td>
+
+                                <td class="text-muted small">
+                                    {{ criminal.timestamp }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    Henüz veri gelmedi veya veritabanı boş...
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center text-muted mt-4 small">
+            <p>Interpol Project Dashboard &copy; 2024</p>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        $('#criminal_table').DataTable({
+            stateSave: true,
+
+            order: [[ 0, "desc" ]]
+        });
+    });
+</script>
+
+</body>
+</html>
