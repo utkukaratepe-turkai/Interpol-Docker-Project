@@ -5,6 +5,8 @@ import sqlite3
 import threading
 from datetime import datetime
 import os
+import pycountry
+
 app = Flask(__name__)
 
 RABBIT_HOST = os.getenv("RABBIT_HOST", "rabbitmq")
@@ -36,6 +38,26 @@ def init_db():
     conn.commit()
     conn.close()
 
+def convert_to_country(code_string):
+    if not code_string:
+        return "Not Known"
+
+    codes = str(code_string).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+    codes = codes.split(',')
+    nationalities = []
+
+    for code in codes:
+        code = code.strip()
+        try:
+            nationality = pycountry.countries.get(alpha_2=code)
+            if nationality:
+                nationalities.append(nationality.name)
+            else:
+                nationalities.append(code)
+        except:
+            nationalities.append(code)
+
+    return ', '.join(nationalities)
 
 # --- ARKA PLAN GÖREVİ: KUYRUK DİNLEYİCİSİ ---
 def consume_queue():
@@ -59,6 +81,7 @@ def consume_queue():
                     entity_id = person.get('entity_id')
                     name = f"{person.get('forename', '')} {person.get('name', '')}"
                     nationalities = str(person.get('nationalities', []))
+                    nationalities = convert_to_country(nationalities)
                     # Burada basitlik olsun diye timestamp'i şu anki zaman alıyoruz
                     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -109,22 +132,22 @@ def index():
     for row in criminals:
         criminal = dict(row)
         timestamp = datetime.strptime(criminal['timestamp'], '%Y-%m-%d %H:%M:%S')
-        fark_saniye = (now - timestamp).total_seconds()
+        difference_on_seconds = (now - timestamp).total_seconds()
         is_updated = criminal['status'] == 'UPDATED'
-        if is_updated and fark_saniye < 30: #60 saniye içinde güncellendiyse alarm çalsın.
+        if is_updated and difference_on_seconds < 30: #60 saniye içinde güncellendiyse alarm çalsın.
             criminal['alarm'] = True
         else:
             criminal['alarm'] = False
         criminal_list.append(criminal)
-    return render_template('index.html', criminals=criminal_list)
+    return render_template('index_with_bootstrap.html', criminals=criminal_list)
 
 
 if __name__ == '__main__':
     init_db()
 
     # Kuyruk dinleyicisini ayrı bir "Thread" (iş parçacığı) olarak başlat
-    # Böylece Flask sunucusu çalışırken arka planda veri kaydı devam eder.
+    # Bu sayede Flask sunucusu çalışırken arka planda veri kaydı devam etsin.
     threading.Thread(target=consume_queue, daemon=True).start()
 
-    # Web sunucusunu başlat (Host 0.0.0.0 docker için şarttır)
+    # Web sunucusunu başlat
     app.run(host='0.0.0.0', port=5000)
