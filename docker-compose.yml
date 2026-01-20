@@ -47,4 +47,13 @@ services:
         condition: service_healthy
     restart: always
 
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: interpol_user
+      POSTGRES_PASSWORD: gizlisifre123
+      POSTGRES_DB: interpol_db
+    ports:
+      - "5432:5432"  # Dışarıdan erişim için (Opsiyonel)
+    restart: always
 
