@@ -22,7 +22,7 @@ services:
       - PYTHONUNBUFFERED=1
       - RABBIT_HOST=rabbitmq
       - QUEUE_NAME=interpol_queue
-      - SLEEP_TIME=60
+      - SLEEP_TIME=86400 #24 SAATTE BİR ÇALIŞ
       - API_URL=https://ws-public.interpol.int/notices/v1/red?resultPerPage=160&page=1
     depends_on:
       rabbitmq:
@@ -47,6 +47,7 @@ services:
         condition: service_healthy
     restart: always
 
+  #4. Container: Database
   db:
     image: postgres:15-alpine
     environment:
@@ -55,5 +56,11 @@ services:
       POSTGRES_DB: interpol_db
     ports:
       - "5432:5432"  # Dışarıdan erişim için (Opsiyonel)
+    volumes:
+      # [VOLUME_ADI] : [KONTEYNER_İÇİNDEKİ_HEDEF_KLASÖR]
+      - postgres_data:/var/lib/postgresql/data
     restart: always
+
+volumes:
+  postgres_data:
 
