@@ -1,3 +1,4 @@
+import requests
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 import pika
@@ -6,12 +7,21 @@ import threading
 from datetime import datetime
 import os
 import pycountry
+from io import BytesIO
+from minio import Minio
 
 app = Flask(__name__)
 
+#Environment Variables
 RABBIT_HOST = os.getenv("RABBIT_HOST", "rabbitmq")
 QUEUE_NAME = os.getenv("QUEUE_NAME", "interpol_queue")
 DB_NAME=os.getenv("DB_NAME", "interpol.db")
+
+#Minio Configuration
+MINIO_ENDPOINT = "minio:9000" #Dockerdan bağlanabilmek için
+MINIO_ACCESS = "minioadmin"
+MINIO_SECRET = "minioadmin"
+BUCKET_NAME = "interpol-criminal-images"
 
 # postgresql://KULLANICI:SIFRE@SERVIS_ADI:PORT/VERITABANI_ADI
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://interpol_user:gizlisifre123@db:5432/interpol_db'
@@ -20,7 +30,45 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #Veritabanı objesini oluştur.
 db = SQLAlchemy(app)
 
-#Artık sorgu yazmıyoruz Class tanımlıyoruz.
+#Minio Initialization
+minio_client = Minio(
+    MINIO_ENDPOINT,
+    access_key=MINIO_ACCESS,
+    secret_key=MINIO_SECRET,
+    secure=False
+)
+
+# Kova (Bucket) oluşturma işlemi
+try:
+    if not minio_client.bucket_exists(BUCKET_NAME):
+        minio_client.make_bucket(BUCKET_NAME)
+        print(f"📂 '{BUCKET_NAME}' kovası oluşturuldu.")
+
+        # --- POLICY AYARI (HATA KORUMALI) ---
+        # MinIO sürümlerine göre policy formatı değişebiliyor.
+        # En basit ve garanti yöntem: Principal = "*"
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "PublicRead",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{BUCKET_NAME}/*"]
+                }
+            ]
+        }
+        minio_client.set_bucket_policy(BUCKET_NAME, json.dumps(policy))
+        print("🔓 Kova 'Public' yapıldı.")
+
+except Exception as e:
+    # Eğer Policy hatası verirse programı çökertme, sadece uyarı ver ve devam et.
+    # Resimler yine de indirilir, sadece tarayıcıda hemen görünmeyebilir.
+    print(f"⚠️ MinIO Policy Uyarısı: {e}")
+    print("Devam ediliyor... (Resim indirme işlemi etkilenmez)")
+
+#Veritabanı Modeli
 class Criminal(db.Model):
     __tablename__ = 'criminals'
 
@@ -31,6 +79,7 @@ class Criminal(db.Model):
     timestamp = db.Column(db.String(50))
     alarm = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default="NEW")
+    image_url = db.Column(db.String(300)) #Thumbnail linkini tutacağız
 
     def __repr__(self):
         return f'<Criminal {self.name}>'
@@ -56,6 +105,40 @@ def convert_to_country(code_string):
 
     return ', '.join(nationalities)
 
+#Image Process Engine
+def process_thumbnail(criminal_data, entity_id):
+    """
+    Sadece _links -> thumbnail içindeki resmi indirir ve MinIO'ya atar.
+    """
+    filename = f"{entity_id.replace('/','_')}.jpg" #Dosya Adı: ID.jpg
+    try:
+        links = criminal_data.get("_links", {})
+        thumbnail_data = links.get("thumbnail", {})
+        href = thumbnail_data.get("href")
+
+        if not href or not isinstance(href, str) or not href.startswith('http'):
+            return None
+
+        # 1.Resmi indir (RAM'e)
+        response = requests.get(href, timeout=10, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        if response.status_code == 200:
+            img_data = BytesIO(response.content)
+            length = len(response.content)
+
+            # 2.MinIO'ya yükle
+            minio_client.put_object(
+                BUCKET_NAME,
+                filename,
+                img_data,
+                length,
+                content_type="image/jpeg"
+            )
+        #3.Web server için URL üret (localhost)
+        return f"http://localhost:9000/{BUCKET_NAME}/{filename}"
+
+    except Exception as e:
+        print(f"Resim Hatası ({entity_id}): {e}")
+        return None
 
 # --- DÜZELTİLMİŞ HALİ ---
 def consume_queue():
@@ -81,25 +164,46 @@ def consume_queue():
                         nationalities = convert_to_country(raw_nationalities)
                         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                        existing_user = Criminal.query.filter_by(entity_id=entity_id).first()
+                        existing = Criminal.query.filter_by(entity_id=entity_id).first()
 
-                        if existing_user:
-                            # Değişiklik kontrolü
-                            if existing_user.nationalities != nationalities or existing_user.name != name:
-                                existing_user.nationalities = nationalities
-                                existing_user.name = name
-                                existing_user.timestamp = now
-                                existing_user.status = "UPDATED"
+                        if existing:
+                            # Değişiklikleri not alacağımız boş bir liste oluşturuyoruz
+                            degisiklik_raporu = []
+
+                            # 1. İsim Kontrolü
+                            if existing.name != name:
+                                degisiklik_raporu.append(f"İSİM: '{existing.name}' -> '{name}'")
+                                existing.name = name  # Veritabanını güncelle
+
+                            # 2. Uyruk Kontrolü
+                            if existing.nationalities != nationalities:
+                                degisiklik_raporu.append(f"UYRUK: '{existing.nationalities}' -> '{nationalities}'")
+                                existing.nationalities = nationalities  # Veritabanını güncelle
+
+                            # Eğer rapor listesi boş değilse, demek ki bir şeyler değişmiş
+                            if len(degisiklik_raporu) > 0:
+                                existing.timestamp = now
+                                existing.status = "UPDATED"
+                                existing.alarm = False  # Alarmın tekrar çalması için (Index'te hesaplanacak)
+
                                 degisiklik_sayisi += 1
-                                print(f"GÜNCELLEME: {name}")
+
+                                # Listeyi okunabilir bir cümleye çevir
+                                rapor_metni = " | ".join(degisiklik_raporu)
+                                print(f"♻️ GÜNCELLEME [{entity_id}]: {rapor_metni}")
                         else:
+                            #Thumbnail'i minIO'ya çek.
+                            thumb_url = process_thumbnail(person, entity_id)
+
+                            #Veritabanına kaydet.
                             yeni_suclu = Criminal(
                                 entity_id=entity_id,
                                 name=name,
                                 nationalities=nationalities,
                                 timestamp=now,
                                 alarm=False,
-                                status="NEW"
+                                status="NEW",
+                                image_url=thumb_url
                             )
                             db.session.add(yeni_suclu)
                             degisiklik_sayisi += 1

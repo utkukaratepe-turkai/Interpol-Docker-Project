@@ -15,3 +15,4 @@ Werkzeug==3.1.5
 pycountry
 psycopg2-binary
 Flask-SQLAlchemy
+minio

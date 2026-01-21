@@ -43,6 +43,7 @@
                     <table id="criminal_table" class="table table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
+                                <th style="width: 80px;">Fotoğraf</th>
                                 <th scope="col" class="py-3 ps-4">ID / Durum</th>
                                 <th scope="col" class="py-3">İsim</th>
                                 <th scope="col" class="py-3">Uyruk</th>
@@ -53,6 +54,22 @@
                             {% for criminal in criminals %}
 
                             <tr class="{% if criminal.alarm == True %}table-danger border-danger{% endif %}">
+
+                                <td>
+                                    {% if criminal.image_url %}
+                                        <a href="{{ criminal.image_url }}" target="_blank">
+                                            <img src="{{ criminal.image_url }}"
+                                                 alt="{{ criminal.name }}"
+                                                 class="rounded-circle border border-2 border-secondary"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        </a>
+                                    {% else %}
+                                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px;">
+                                            <span style="font-size: 20px;">👤</span>
+                                        </div>
+                                    {% endif %}
+                                </td>
 
                                 <td class="ps-4">
                                     <span class="fw-bold font-monospace">#{{ criminal.entity_id }}</span>
@@ -82,7 +99,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
                                     Henüz veri gelmedi veya veritabanı boş...
                                 </td>
                             </tr>
@@ -109,7 +126,7 @@
         $('#criminal_table').DataTable({
             stateSave: true,
 
-            order: [[ 0, "desc" ]]
+            order: [[ 4, "desc" ]]
         });
     });
 </script>

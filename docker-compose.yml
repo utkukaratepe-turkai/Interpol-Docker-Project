@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 
 services:
   #1. Container: RabbitMQ (Veri Kuyruğu - Container C)
@@ -61,6 +61,22 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
+# 5. MinIO (Resim Deposu - AWS S3 Alternatifi)
+  minio:
+    image: minio/minio
+    container_name: interpol_minio
+    ports:
+      - "9000:9000"  # API Portu (Python kodu buraya bağlanır)
+      - "9001:9001"  # Arayüz Portu (Tarayıcıdan sen girersin)
+    environment:
+      MINIO_ROOT_USER: minioadmin     # app.py'deki KEY ile aynı olmalı
+      MINIO_ROOT_PASSWORD: minioadmin # app.py'deki SECRET ile aynı olmalı
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
 volumes:
   postgres_data:
+  minio_data:
+
 
