@@ -9,7 +9,10 @@ import os
 import pycountry
 from io import BytesIO
 from minio import Minio
+from sqlalchemy.dialects.postgresql import JSONB
 import time
+
+headers = {"User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36"} #403 hatası almamak için
 
 app = Flask(__name__)
 
@@ -44,9 +47,7 @@ try:
         minio_client.make_bucket(BUCKET_NAME)
         print(f"📂 '{BUCKET_NAME}' kovası oluşturuldu.")
 
-        # --- POLICY AYARI (HATA KORUMALI) ---
-        # MinIO sürümlerine göre policy formatı değişebiliyor.
-        # En basit ve garanti yöntem: Principal = "*"
+        # --- POLICY AYARI---
         policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -64,7 +65,6 @@ try:
 
 except Exception as e:
     # Eğer Policy hatası verirse programı çökertme, sadece uyarı ver ve devam et.
-    # Resimler yine de indirilir, sadece tarayıcıda hemen görünmeyebilir.
     print(f"⚠️ MinIO Policy Uyarısı: {e}")
     print("Devam ediliyor... (Resim indirme işlemi etkilenmez)")
 
@@ -79,57 +79,29 @@ class Criminal(db.Model):
     timestamp = db.Column(db.String(50))
     alarm = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(50), default="NEW")
-    image_url = db.Column(db.String(300)) #Thumbnail linkini tutacağız
+    image_url = db.Column(db.String(300))  # Thumbnail linkini tutacağız
 
-    # İLİŞKİ: Bir suçlunun BİR detay kaydı olur (uselist=False -> Bire-Bir İlişki)
-    # Bu sayede 'criminal.detail' diyerek diğer tablodaki veriye ulaşacağız.
-    detail = db.relationship('CriminalDetail', backref='owner', uselist=False, cascade="all, delete-orphan")
+    # Boy, kilo, göz rengi, suçlamalar, her şeyi bu torbaya atacağız.
+    details = db.Column(JSONB)
+
+    # Fotoğrafları yine ayrı tutabiliriz çünkü onlar liste ve zayıf varlık.
     photos = db.relationship('Photo', backref='owner', lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Criminal {self.name} (ID: {self.entity_id})>'
 
-
-class CriminalDetail(db.Model):
-    __tablename__ = 'criminal_details'
-
-    id = db.Column(db.Integer, primary_key=True)
-    criminal_id = db.Column(db.Integer, db.ForeignKey('criminals.id'), unique=True, nullable=False)
-
-    # -- JSON'dan Gelen Ekstra Veriler --
-    birth_date = db.Column(db.String(50))  # date_of_birth
-    birth_place = db.Column(db.String(100))  # place_of_birth
-    birth_country = db.Column(db.String(10))  # country_of_birth_id (TN, FR vb.)
-
-    gender = db.Column(db.String(10))  # sex_id (M/F)
-    height = db.Column(db.Float)  # height
-    weight = db.Column(db.Float)  # weight
-    eyes = db.Column(db.String(50))  # eyes_colors_id
-    hair = db.Column(db.String(50))  # hairs_id
-
-    languages = db.Column(db.String(200))  # languages_spoken_ids (Liste stringe çevrilecek)
-    marks = db.Column(db.Text)  # distinguishing_marks (Uzun metin olabilir)
-
-    # Suçlama Bilgileri (Arrest Warrants içinden)
-    warrant_country = db.Column(db.String(50))  # issuing_country_id
-    charges = db.Column(db.Text)  # charge
-    charge_translation = db.Column(db.Text) # charge_translation
-
-    def __repr__(self):
-        return f'<Detail {self.criminal_id}>'
-
-
-# --- FOTOĞRAF TABLOSU (GÜNCELLENDİ) ---
+# --- FOTOĞRAF TABLOSU ---
 class Photo(db.Model):
     __tablename__ = 'photos'
 
     id = db.Column(db.Integer, primary_key=True)
     criminal_id = db.Column(db.Integer, db.ForeignKey('criminals.id'), nullable=False)
     url = db.Column(db.String(300))  # MinIO Linki
-    picture_id = db.Column(db.String(50))  # Interpol'ün verdiği ID (Örn: 63782631)
+    picture_id = db.Column(db.String(50))  # Interpol'ün verdiği ID
 
     def __repr__(self):
         return f'<Photo {self.picture_id}>'
+
 
 def convert_to_country(code_string):
     if not code_string:
@@ -152,112 +124,66 @@ def convert_to_country(code_string):
 
     return ', '.join(nationalities)
 
+
 def process_criminal_detail_and_photos(criminal_db_obj, person_links):
     """
-    1. Detay sayfasını çeker (Kişisel Bilgiler)
-    2. O sayfanın içindeki 'images' linkini bulur
-    3. O linke gidip fotoğraf galerisini çeker (MinIO + DB)
+    1. Detay sayfasını çeker ve JSON olarak kaydeder.
+    2. Resimleri indirir.
     """
-    # 1. ADIM: DETAY SAYFASINA GİT (Kişisel Bilgiler İçin)
     detail_href = person_links.get('self', {}).get('href')
     if not detail_href: return
 
     try:
-        # --- Profil Detaylarını Çek ---
-        resp = requests.get(detail_href, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        if resp.status_code != 200: return
+        # --- A) DETAY VERİSİNİ ÇEK VE KAYDET (JSONB) ---
+        resp = requests.get(detail_href, timeout=10, headers=headers)
 
-        data = resp.json()
+        if resp.status_code == 200:
+            data = resp.json()
 
-        # --- A) DETAY TABLOSUNA KAYIT ---
-        # (Bu kısım aynı kalıyor, kişisel bilgileri kaydediyoruz)
-        langs = data.get('languages_spoken_ids', [])
-        langs_str = ", ".join(langs) if langs else None
+            # Tek tek eyes, hair vs eşlemiyoruz. Hepsini 'details' kolonuna atıyoruz.
+            criminal_db_obj.details = data
 
-        warrants = data.get('arrest_warrants', [])
+            # --- B) FOTOĞRAFLARI ÇEK ---
+            images_link = data.get('_links', {}).get('images', {}).get('href')
 
-        charge_list=[]
-        charge_trans_list=[]
-        issuing_countries=set()
+            if images_link:
+                print(f"📸 Fotoğraf sayfasına gidiliyor: {images_link}")
 
-        for w in warrants:
-            if w.get('charge'):
-                charge_list.append(w.get('charge'))
+                # Fotoğraf endpoint'ine AYRI bir istek atıyoruz
+                img_resp = requests.get(images_link, timeout=15, headers=headers)
 
-            if w.get('charge_translation'):
-                charge_trans_list.append(w.get('charge_translation'))
+                if img_resp.status_code == 200:
+                    img_data = img_resp.json()
 
-            if w.get('issuing_country_id'):
-                issuing_countries.add(w.get('issuing_country_id'))
+                    # Artık resim listesi burada!
+                    embedded_images = img_data.get('_embedded', {}).get('images', [])
 
-        # Listeleri string'e çevirip veritabanına hazır hale getiriyoruz
-        charge = "\n".join(charge_list)
-        charge_translation = "\n".join(charge_trans_list)
-        issuing_country_id = ", ".join(issuing_countries)
+                    print(f"   -> {len(embedded_images)} adet fotoğraf bulundu.")
 
-        # Eğer detay daha önce yoksa ekle
-        if not criminal_db_obj.detail:
-            detail = CriminalDetail(
-                owner=criminal_db_obj,
-                birth_date=data.get('date_of_birth'),
-                birth_place=data.get('place_of_birth'),
-                birth_country=data.get('country_of_birth_id'),
-                gender=data.get('sex_id'),
-                height=data.get('height'),
-                weight=data.get('weight'),
-                eyes=data.get('eyes_colors_id'),
-                hair=data.get('hairs_id'),
-                languages=langs_str,
-                marks=data.get('distinguishing_marks'),
-                warrant_country=issuing_country_id,
-                charges=charge,
-                charge_translation=charge_translation
-            )
-            db.session.add(detail)
+                    for img_item in embedded_images:
+                        pic_id = img_item.get('picture_id')
+                        img_href = img_item.get('_links', {}).get('self', {}).get('href')
 
-        # --- B) FOTOĞRAF GALERİSİNE GİT (DÜZELTME BURADA) ---
-        # Ana detay JSON'ının içinde '_links' -> 'images' linkini alıyoruz.
-        images_link = data.get('_links', {}).get('images', {}).get('href')
+                        if img_href and pic_id:
+                            # MinIO'ya Yükle
+                            minio_url = upload_image_to_minio(
+                                image_url=img_href,
+                                entity_id=criminal_db_obj.entity_id,
+                                folder_type="others",
+                                img_id_suffix=pic_id
+                            )
 
-        if images_link:
-            print(f"📸 Fotoğraf sayfasına gidiliyor: {images_link}")
-
-            # Fotoğraf endpoint'ine AYRI bir istek atıyoruz
-            img_resp = requests.get(images_link, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
-
-            if img_resp.status_code == 200:
-                img_data = img_resp.json()
-
-                # Artık resim listesi burada!
-                embedded_images = img_data.get('_embedded', {}).get('images', [])
-
-                print(f"   -> {len(embedded_images)} adet fotoğraf bulundu.")
-
-                for img_item in embedded_images:
-                    pic_id = img_item.get('picture_id')
-                    img_href = img_item.get('_links', {}).get('self', {}).get('href')
-
-                    if img_href and pic_id:
-                        # MinIO'ya Yükle
-                        minio_url = upload_image_to_minio(
-                            image_url=img_href,
-                            entity_id=criminal_db_obj.entity_id,
-                            folder_type="others",
-                            img_id_suffix=pic_id
-                        )
-
-                        if minio_url:
-                            # DB Kontrol ve Kayıt
-                            existing_photo = Photo.query.filter_by(picture_id=pic_id).first()
-                            if not existing_photo:
-                                new_photo = Photo(
-                                    owner=criminal_db_obj,
-                                    url=minio_url,
-                                    picture_id=pic_id
-                                )
-                                db.session.add(new_photo)
-                                # print(f"      + Foto Eklendi: {pic_id}")
-
+                            if minio_url:
+                                # DB Kontrol ve Kayıt
+                                existing_photo = Photo.query.filter_by(picture_id=pic_id).first()
+                                if not existing_photo:
+                                    new_photo = Photo(
+                                        owner=criminal_db_obj,
+                                        url=minio_url,
+                                        picture_id=pic_id
+                                    )
+                                    db.session.add(new_photo)
+                                    # print(f"      + Foto Eklendi: {pic_id}")
     except Exception as e:
         print(f"Detay/Foto işleme hatası ({criminal_db_obj.entity_id}): {e}")
 
@@ -280,7 +206,7 @@ def upload_image_to_minio(image_url, entity_id, folder_type, img_id_suffix):
         # Örnek: 2026_3921/others/2026_3921_63782631.jpg
         filename = f"{safe_entity_id}/{folder_type}/{safe_entity_id}_{img_id_suffix}.jpg"
 
-        response = requests.get(image_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        response = requests.get(image_url, timeout=10, headers=headers)
         if response.status_code == 200:
             img_data = BytesIO(response.content)
             length = len(response.content)
@@ -342,70 +268,56 @@ def consume_queue():
                             existing = Criminal.query.filter_by(entity_id=entity_id).first()
 
                             if existing:
-                                # --- GÜNCELLEME KONTROLÜ ---
+                                # --- GÜNCELLEME KONTROLÜ (JSONB Versiyonu) ---
                                 degisiklik_raporu = []
 
-                                # 1. İsim ve Uyruk Kontrolü (Klasik Kontrol)
+                                # İsim ve Uyruk kontrolü aynı
                                 if existing.name != name:
-                                    degisiklik_raporu.append(f"İSİM: '{existing.name}' -> '{name}'")
+                                    degisiklik_raporu.append(f"İSİM DEĞİŞTİ")
                                     existing.name = name
 
                                 if existing.nationalities != nationalities:
-                                    degisiklik_raporu.append(f"UYRUK: '{existing.nationalities}' -> '{nationalities}'")
+                                    degisiklik_raporu.append(f"UYRUK DEĞİŞTİ")
                                     existing.nationalities = nationalities
 
-                                # 2. DETAY KONTROLÜ (YENİ: Suçlama ve Fiziksel Özellikler)
-                                # Detay değişmiş mi diye anlamak için güncel veriyi çekip bakıyoruz.
+                                # Detay kontrolü için yine canlı veriye bakıyoruz
                                 detail_href = links.get('self', {}).get('href')
-
-                                # Sadece detay sayfası linki varsa ve veritabanında eski detay varsa kıyasla
-                                if detail_href and existing.detail:
+                                if detail_href:
                                     try:
-                                        # Hızlıca güncel veriyi çek (Timeout kısa tutuldu)
-                                        resp = requests.get(detail_href, timeout=5,
-                                                            headers={"User-Agent": "Mozilla/5.0"})
+                                        resp = requests.get(detail_href, timeout=5, headers=headers)
                                         if resp.status_code == 200:
                                             live_data = resp.json()
 
-                                            # A) Suçlama (Charge) Değişmiş mi?
-                                            live_warrants = live_data.get('arrest_warrants', [])
-                                            live_charges_list = [w.get('charge') for w in live_warrants if
-                                                                 w.get('charge')]
-                                            live_charges_str = "\n".join(live_charges_list)
+                                            # JSON KARŞILAŞTIRMASI (Çok daha güçlü)
+                                            # Veritabanındaki JSON ile Canlı JSON aynı mı?
+                                            # (Not: Birebir eşitlik bazen timestamp yüzünden tutmayabilir,
+                                            # sadece önemli alanları kıyaslamak daha garantidir ama şimdilik böyle de olur)
 
-                                            # Veritabanındaki eski suçlama (None ise boş string yap)
-                                            db_charges = existing.detail.charges or ""
+                                            # Örnek: Sadece suçlamalar değişmiş mi bakalım
+                                            old_warrants = existing.details.get(
+                                                'arrest_warrants') if existing.details else []
+                                            new_warrants = live_data.get('arrest_warrants', [])
 
-                                            if live_charges_str != db_charges:
-                                                degisiklik_raporu.append("SUÇLAMA GÜNCELLENDİ")
+                                            if old_warrants != new_warrants:
+                                                degisiklik_raporu.append("SUÇLAMALAR GÜNCELLENDİ")
 
-                                            # B) Ayırt Edici İşaretler (Marks) Değişmiş mi?
-                                            live_marks = live_data.get('distinguishing_marks') or ""
-                                            db_marks = existing.detail.marks or ""
-
-                                            if live_marks != db_marks:
+                                            # Fiziksel özellikler değişmiş mi?
+                                            if existing.details and existing.details.get(
+                                                    'distinguishing_marks') != live_data.get('distinguishing_marks'):
                                                 degisiklik_raporu.append("FİZİKSEL DETAY GÜNCELLENDİ")
 
-                                    except Exception as check_e:
-                                        # Detay kontrolü hata verirse akışı bozma, sadece logla
-                                        print(f"⚠️ Detay kontrol hatası ({entity_id}): {check_e}")
+                                            # Eğer güncelleme varsa, YENİ JSON'ı kaydet
+                                            if len(degisiklik_raporu) > 0:
+                                                existing.details = live_data  # Güncel veriyi bas
 
-                                # --- EĞER HERHANGİ BİR DEĞİŞİKLİK VARSA ---
+                                    except Exception as e:
+                                        print(f"Kontrol hatası: {e}")
+
                                 if len(degisiklik_raporu) > 0:
                                     existing.timestamp = now
                                     existing.status = "UPDATED"
-                                    existing.alarm = False
-
-                                    # Eski detayı sil (Çünkü process fonksiyonu yenisini oluşturacak)
-                                    if existing.detail:
-                                        db.session.delete(existing.detail)
-                                        db.session.flush()
-
-                                    # Tüm yeni verileri (Detay + Fotoğraflar) indir ve kaydet
-                                    process_criminal_detail_and_photos(existing, links)
-
-                                    degisiklik_sayisi += 1
-                                    print(f"♻️ GÜNCELLEME [{entity_id}]: {' | '.join(degisiklik_raporu)}")
+                                    process_criminal_detail_and_photos(existing, links)  # Resimleri de tazele
+                                    # ...
 
                             else:
                                 # --- YENİ KAYIT ---
@@ -424,7 +336,8 @@ def consume_queue():
                                     timestamp=now,
                                     alarm=False,
                                     status="NEW",
-                                    image_url=thumb_url
+                                    image_url=thumb_url,
+                                    details={}
                                 )
                                 db.session.add(new_criminal)
                                 db.session.flush()
@@ -472,7 +385,7 @@ def index():
         timestamp = datetime.strptime(criminal.timestamp, '%Y-%m-%d %H:%M:%S')
         difference_on_seconds = (now - timestamp).total_seconds()
         is_updated = criminal.status == 'UPDATED'
-        if is_updated and difference_on_seconds < 30: #60 saniye içinde güncellendiyse alarm çalsın.
+        if is_updated and difference_on_seconds < 60: #60 saniye içinde güncellendiyse alarm çalsın.
             criminal.alarm = True
         else:
             criminal.alarm = False
@@ -480,19 +393,46 @@ def index():
     return render_template('index_with_bootstrap.html', criminals=criminal_list)
 
 
-# --- JINJA2 ÖZEL FİLTRE (Veri yoksa 'BİLİNMİYOR' yazar) ---
-@app.template_filter('bilinmiyor')
-def bilinmiyor_filter(value):
-    if value is None or value == "" or value == "None" or value == []:
-        return "BİLİNMİYOR"
-    return value
-
 # --- DETAY SAYFASI ROTASI ---
 @app.route('/detail/<path:entity_id>') # 'path:' takısı her şeyi (slash dahil) tek string olarak alır.
 def detail_page(entity_id):
     # ID'ye göre suçluyu bul, yoksa 404 hatası ver
     criminal = Criminal.query.filter_by(entity_id=entity_id).first_or_404()
     return render_template('detail.html', criminal=criminal)
+
+
+@app.template_filter('dil_cevir')
+def dil_cevir_filter(deger):
+    """
+    Interpol'den gelen kodu (FRE, ENG) pycountry ile adına çevirir.
+    """
+    if not deger:
+        return "Not Known"
+
+    codes = str(deger).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+    codes = codes.split(',')
+    languages = []
+
+    for code in codes:
+        code = code.strip() #Boşlukları ortadan kaldır.
+        try:
+            language = pycountry.languages.get(alpha_3=code)
+            if language:
+                languages.append(language.name)
+            else:
+                languages.append(code)
+        except:
+            languages.append(code)
+
+    return ', '.join(languages)
+
+@app.template_filter('ulke_cevir')
+def ulke_cevir_filter(code):
+    """
+    Interpol'den gelen kodu (RU, US) pycountry ile adına çevirir.
+    """
+    return convert_to_country(code)
+
 
 if __name__ == '__main__':
 

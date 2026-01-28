@@ -4,27 +4,18 @@
     <meta charset="UTF-8">
     <title>{{ criminal.name }} - Detay Dosyası</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        /* Veri olmayan alanlar silik gözüksün */
-        .bilinmiyor-text {
-            color: #aaa;
-            font-style: italic;
-        }
+        .bilinmiyor-text { color: #aaa; font-style: italic; }
         .card-header-custom {
             background-color: #f8f9fa;
-            border-bottom: 2px solid #dc3545; /* Interpol Kırmızısı */
+            border-bottom: 2px solid #dc3545;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .gallery-img {
-            transition: transform 0.3s ease;
-            cursor: pointer;
-        }
-        .gallery-img:hover {
-            transform: scale(1.05);
-            z-index: 10;
-        }
+        .gallery-img { transition: transform 0.3s ease; cursor: pointer; }
+        .gallery-img:hover { transform: scale(1.05); z-index: 10; }
     </style>
 </head>
 <body class="bg-light">
@@ -62,12 +53,16 @@
                     </div>
 
                     <h3 class="fw-bold mt-2">{{ criminal.name }}</h3>
-                    <div class="badge bg-secondary text-wrap mb-2">{{ criminal.nationalities | bilinmiyor }}</div>
+
+                    <div class="badge bg-secondary text-wrap mb-2">
+                        {% set nats = criminal.details.get('nationalities', []) %}
+                        {{ nats | join(', ') | ulke_cevir if nats else 'Bilinmiyor' }}
+                    </div>
 
                     <hr>
                     <div class="text-start small text-muted">
+                        <p class="mb-1"><strong>Doğum Tarihi:</strong> {{ criminal.details.get('date_of_birth', '-') }}</p>
                         <p class="mb-1"><strong>Son Güncelleme:</strong> {{ criminal.timestamp }}</p>
-                        <p class="mb-1"><strong>Veri Kaynağı:</strong> INTERPOL API</p>
                     </div>
                 </div>
             </div>
@@ -80,20 +75,27 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="fw-bold text-secondary small">Doğum Tarihi</label>
-                            <div class="fs-5">{{ criminal.detail.birth_date | bilinmiyor }}</div>
+                            <label class="fw-bold text-secondary small">Adı / Soyadı</label>
+                            <div class="fs-5">{{ criminal.details.get('forename', '') }} {{ criminal.details.get('name', '') }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Doğum Yeri</label>
-                            <div class="fs-5">{{ criminal.detail.birth_place | bilinmiyor }}</div>
+                            <div class="fs-5">{{ criminal.details.get('place_of_birth') or 'Bilinmiyor' }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Cinsiyet</label>
-                            <div class="fs-5">{{ criminal.detail.gender | bilinmiyor }}</div>
+                            <div class="fs-5">
+                                {% if criminal.details.get('sex_id') == 'M' %} Erkek
+                                {% elif criminal.details.get('sex_id') == 'F' %} Kadın
+                                {% else %} {{ criminal.details.get('sex_id', '-') }} {% endif %}
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
-                            <div class="fs-5">{{ criminal.detail.languages | bilinmiyor }}</div>
+                            <div class="fs-5">
+                                {% set langs = criminal.details.get('languages_spoken_ids', []) %}
+                                {{ langs | join(', ') | dil_cevir if langs else '-' }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -105,23 +107,31 @@
                     <div class="row g-3">
                         <div class="col-md-3 col-6">
                             <label class="fw-bold text-secondary small">Boy</label>
-                            <div>{{ criminal.detail.height | bilinmiyor }}</div>
+                            <div>{{ criminal.details.get('height') or '-' }}</div>
                         </div>
                         <div class="col-md-3 col-6">
                             <label class="fw-bold text-secondary small">Kilo</label>
-                            <div>{{ criminal.detail.weight | bilinmiyor }}</div>
+                            <div>{{ criminal.details.get('weight') or '-' }}</div>
                         </div>
                         <div class="col-md-3 col-6">
                             <label class="fw-bold text-secondary small">Göz Rengi</label>
-                            <div>{{ criminal.detail.eyes | bilinmiyor }}</div>
+                            <div>
+                                {% set eyes = criminal.details.get('eyes_colors_id', []) %}
+                                {{ eyes | join(', ') if eyes else '-' }}
+                            </div>
                         </div>
                         <div class="col-md-3 col-6">
                             <label class="fw-bold text-secondary small">Saç Rengi</label>
-                            <div>{{ criminal.detail.hair | bilinmiyor }}</div>
+                            <div>
+                                {% set hairs = criminal.details.get('hairs_id', []) %}
+                                {{ hairs | join(', ') if hairs else '-' }}
+                            </div>
                         </div>
                         <div class="col-12 mt-3">
-                            <label class="fw-bold text-danger small">Belirgin İşaretler / Dövmeler</label>
-                            <div class="p-2 bg-light border rounded">{{ criminal.detail.marks | bilinmiyor }}</div>
+                            <label class="fw-bold text-danger small">Belirgin İşaretler</label>
+                            <div class="p-2 bg-light border rounded">
+                                {{ criminal.details.get('distinguishing_marks') or 'Belirtilmemiş' }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,31 +140,54 @@
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-dark text-white fw-bold">⚖️ SUÇLAMA VE YAKALAMA KARARI</div>
                 <div class="card-body">
+
+                    {% set warrants = criminal.details.get('arrest_warrants', []) %}
+
                     <div class="mb-3">
-                        <span class="badge bg-danger">ARAYAN ÜLKE: {{ criminal.detail.warrant_country | bilinmiyor }}</span>
+                        <span class="badge bg-danger">
+                            ARAYAN ÜLKE: {{ warrants[0].get('issuing_country_id') if warrants else 'Bilinmiyor' }}
+                        </span>
                     </div>
 
                     <h6 class="fw-bold">Suçlama (Orijinal):</h6>
-                    {% if criminal.detail.charges %}
+
+                    {% if warrants %}
                         <ul class="list-group list-group-flush">
-                            {% for charge in criminal.detail.charges.split('\n') %}
-                                {% if charge.strip() %}
-                                    <li class="list-group-item">
-                                        <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> {{ charge }}
+                            {# 1. Dış Döngü: Her bir yakalama kararını dön #}
+                            {% for warrant in warrants %}
+
+                                {# 2. İç Mantık: 'charge' metnini al ve satır satır böl (LİSTE MANTIĞI) #}
+                                {% set charge_text = warrant.get('charge', '') %}
+
+                                {% if charge_text %}
+                                    {% for line in charge_text.split('\n') %}
+                                        {% if line.strip() %}
+                                            <li class="list-group-item px-0">
+                                                <div class="d-flex align-items-start">
+                                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
+                                                    <span class="fw-bold text-dark">{{ line }}</span>
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+
+                                {# Çeviri varsa hemen suçun altına ekle #}
+                                {% if warrant.get('charge_translation') %}
+                                    <li class="list-group-item border-0 pt-0 pb-3">
+                                        <div class="bg-light p-2 rounded border border-primary ms-4">
+                                            <small class="fw-bold text-primary d-block">Çeviri:</small>
+                                            <span class="text-secondary small">{{ warrant.get('charge_translation') }}</span>
+                                        </div>
                                     </li>
                                 {% endif %}
+
                             {% endfor %}
                         </ul>
                     {% else %}
                         <p class="text-muted">Belirtilen bir suçlama bulunmamaktadır.</p>
                     {% endif %}
 
-                    {% if criminal.detail.charge_translation %}
-                    <h6 class="fw-bold text-primary">Suçlama (Çeviri):</h6>
-                    <p class="bg-light p-3 rounded border border-primary">
-                        {{ criminal.detail.charge_translation }}
-                    </p>
-                    {% endif %}
                 </div>
             </div>
 
@@ -170,7 +203,6 @@
                                      style="width: 100%; height: 150px; object-fit: cover;"
                                      alt="Ekstra Fotoğraf">
                             </a>
-                            <div class="text-center small text-muted mt-1" style="font-size: 10px;">ID: {{ photo.picture_id }}</div>
                         </div>
                         {% endfor %}
                     </div>

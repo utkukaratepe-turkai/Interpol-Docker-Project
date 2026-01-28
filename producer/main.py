@@ -9,7 +9,7 @@ import pycountry
 # RabbitMQ Ayarları
 RABBIT_HOST = os.getenv("RABBIT_HOST", "rabbitmq")
 QUEUE_NAME = os.getenv("QUEUE_NAME", "interpol_queue")
-SLEEP_TIME = int(os.getenv("SLEEP_TIME", 300))  # 5 Dakika bekle
+SLEEP_TIME = int(os.getenv("SLEEP_TIME", 300))
 
 BASE_URL = "https://ws-public.interpol.int/notices/v1/red"
 
@@ -17,7 +17,7 @@ BASE_URL = "https://ws-public.interpol.int/notices/v1/red"
 COUNTRIES = [country.alpha_2 for country in pycountry.countries]
 
 def get_and_post_interpol_data():
-    headers={"User-Agent": "Mozilla/5.0"}
+    headers={"User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36"}
 
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBIT_HOST))
