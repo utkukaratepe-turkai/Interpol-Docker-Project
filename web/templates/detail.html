@@ -55,13 +55,13 @@
                     <h3 class="fw-bold mt-2">{{ criminal.name }}</h3>
 
                     <div class="badge bg-secondary text-wrap mb-2">
-                        {% set nats = criminal.details.get('nationalities', []) %}
+                        {% set nats = criminal.nationalities %}
                         {{ nats | join(', ') | ulke_cevir if nats else 'Bilinmiyor' }}
                     </div>
 
                     <hr>
                     <div class="text-start small text-muted">
-                        <p class="mb-1"><strong>Doğum Tarihi:</strong> {{ criminal.details.get('date_of_birth', '-') }}</p>
+                        <p class="mb-1"><strong>Doğum Tarihi:</strong> {{ criminal.detail.date_of_birth }}</p>
                         <p class="mb-1"><strong>Son Güncelleme:</strong> {{ criminal.timestamp }}</p>
                     </div>
                 </div>
@@ -76,76 +76,71 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Adı / Soyadı</label>
-                            <div class="fs-5">{{ criminal.details.get('forename', '') }} {{ criminal.details.get('name', '') }}</div>
+                            <div class="fs-5">{{ criminal.forename }} {{ criminal.name }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Doğum Yeri</label>
-                            <div class="fs-5">{{ criminal.details.get('place_of_birth') or 'Bilinmiyor' }}</div>
+                            <div class="fs-5">{{ criminal.detail.place_of_birth or 'Bilinmiyor' }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="fw-bold text-secondary small">Cinsiyet</label>
                             <div class="fs-5">
-                                {% if criminal.details.get('sex_id') == 'M' %} Erkek
-                                {% elif criminal.details.get('sex_id') == 'F' %} Kadın
-                                {% else %} {{ criminal.details.get('sex_id', '-') }} {% endif %}
+                                {% if criminal.detail and criminal.detail.sex_id %}
+                                    {% if criminal.detail.sex_id.name == 'M' %} Erkek
+                                    {% elif criminal.detail.sex_id.name == 'F' %} Kadın
+                                    {% else %} Bilinmiyor {% endif %}
+                                {% else %}
+                                    Bilinmiyor
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
-                            <div class="fs-5">
-                                {% set langs = criminal.details.get('languages_spoken_ids', []) %}
-                                {{ langs | join(', ') | dil_cevir if langs else '-' }}
+                        <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
+                            <div class="fs-5 d-flex flex-wrap gap-1 mt-1">
+                                {% set langs = criminal.detail.languages_spoken_ids %}
+                                {% if langs and langs|length > 0 %}
+                                    {% for lang in langs %}
+                                        <span class="badge bg-light text-dark border fw-normal">
+                                            {{ lang | dil_cevir if lang | dil_cevir else lang }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header card-header-custom">📏 Fiziksel Özellikler</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3 col-6">
-                            <label class="fw-bold text-secondary small">Boy</label>
-                            <div>{{ criminal.details.get('height') or '-' }}</div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <label class="fw-bold text-secondary small">Kilo</label>
-                            <div>{{ criminal.details.get('weight') or '-' }}</div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <label class="fw-bold text-secondary small">Göz Rengi</label>
-                            <div>
-                                {% set eyes = criminal.details.get('eyes_colors_id', []) %}
-                                {{ eyes | join(', ') if eyes else '-' }}
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <label class="fw-bold text-secondary small">Saç Rengi</label>
-                            <div>
-                                {% set hairs = criminal.details.get('hairs_id', []) %}
-                                {{ hairs | join(', ') if hairs else '-' }}
-                            </div>
-                        </div>
-                        <div class="col-12 mt-3">
-                            <label class="fw-bold text-danger small">Belirgin İşaretler</label>
-                            <div class="p-2 bg-light border rounded">
-                                {{ criminal.details.get('distinguishing_marks') or 'Belirtilmemiş' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Cinsiyet:</span>
+                <span class="fw-bold">{{ criminal.detail.sex_id.name if criminal.detail and criminal.detail.sex_id else 'Bilinmiyor' }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Boy:</span>
+                <span class="fw-bold">{{ criminal.detail.height or '-' }} cm</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Ağırlık:</span>
+                <span class="fw-bold">{{ criminal.detail.weight or '-' }} kg</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Göz Rengi:</span>
+                <span class="fw-bold">{{ criminal.detail.eyes_colors_id or 'Bilinmiyor' }}</span>
+            </li>
+        </ul>
 
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-dark text-white fw-bold">⚖️ SUÇLAMA VE YAKALAMA KARARI</div>
                 <div class="card-body">
 
-                    {% set warrants = criminal.details.get('arrest_warrants', []) %}
+                    {% set warrants = criminal.detail.arrest_warrants if criminal.detail else [] %}
 
                     <div class="mb-3">
                         <span class="badge bg-danger">
-                            ARAYAN ÜLKE: {{ warrants[0].get('issuing_country_id') if warrants else 'Bilinmiyor' }}
+                            ARAYAN ÜLKE: {{ warrants[0].issuing_country_id if warrants else 'Bilinmiyor' }}
                         </span>
                     </div>
 
@@ -199,7 +194,7 @@
                         {% for photo in criminal.photos %}
                         <div class="col-6 col-md-3">
                             <a href="{{ photo.url }}" target="_blank">
-                                <img src="{{ photo.url }}" class="img-thumbnail gallery-img shadow-sm"
+                                <img src="{{ photo.image_url }}" class="img-thumbnail gallery-img shadow-sm"
                                      style="width: 100%; height: 150px; object-fit: cover;"
                                      alt="Ekstra Fotoğraf">
                             </a>

@@ -43,7 +43,7 @@
                     <table id="criminal_table" class="table table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th style="width: 80px;">Fotoğraf</th>
+                                <th scope="col" class="py-3 ps-4">Fotoğraf</th>
                                 <th scope="col" class="py-3 ps-4">ID / Durum</th>
                                 <th scope="col" class="py-3">İsim</th>
                                 <th scope="col" class="py-3">Uyruk</th>
@@ -86,7 +86,7 @@
                                 </td>
 
                                 <td class="fw-semibold">{{ criminal.name }}
-                                    <a href="{{ url_for('detail_page', entity_id=criminal.entity_id) }}"
+                                    <a href="{{ url_for('main.detail_page', entity_id=criminal.entity_id) }}"
                                        class="btn btn-sm btn-outline-danger ms-2"
                                        target="_blank">
                                        🔍 İncele
@@ -95,7 +95,7 @@
 
                                 <td>
                                     <span class="badge bg-info text-dark bg-opacity-25 border border-info">
-                                        {{ criminal.nationalities }}
+                                        {{ criminal.nationalities | ulke_cevir}}
                                     </span>
                                 </td>
 

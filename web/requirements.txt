@@ -16,3 +16,4 @@ pycountry
 psycopg2-binary
 Flask-SQLAlchemy
 minio
+Flask-Migrate

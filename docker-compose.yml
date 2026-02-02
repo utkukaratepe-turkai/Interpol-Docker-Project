@@ -40,6 +40,7 @@ services:
       - QUEUE_NAME=interpol_queue
       - DB_NAME=interpol.db
       - FLASK_ENV=development
+      - PYTHONPATH=/app
     ports:
       - "5000:5000"
     depends_on:
