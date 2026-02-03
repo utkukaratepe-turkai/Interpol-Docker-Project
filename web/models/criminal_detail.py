@@ -25,8 +25,8 @@ class CriminalDetail(db.Model):
     )
 
     # detail.json'daki diğer fiziksel özellikler
-    height: Mapped[Optional[float]] = mapped_column(Float)  # Boy (Örn: 1.85)
-    weight: Mapped[Optional[float]] = mapped_column(Float)  # Kilo (Örn: 187)
+    height: Mapped[Optional[int]] = mapped_column(Integer)  # Boy (Örn: 1.85)
+    weight: Mapped[Optional[int]] = mapped_column(Integer)  # Kilo (Örn: 187)
     eyes_colors_id: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String))  # ["BLU"]
     hairs_id: Mapped[Optional[List[str]]] = mapped_column(ARRAY(String))
 

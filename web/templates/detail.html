@@ -61,7 +61,19 @@
 
                     <hr>
                     <div class="text-start small text-muted">
-                        <p class="mb-1"><strong>Doğum Tarihi:</strong> {{ criminal.detail.date_of_birth }}</p>
+                        <p class="mb-1">
+                            <strong>Doğum Tarihi:</strong>
+                            {% if criminal.date_of_birth %}
+                                {# Tam tarih varsa gün.ay.yıl formatında gösterir #}
+                                {{ criminal.date_of_birth.strftime('%d.%m.%Y') }}
+                            {% elif criminal.birth_year %}
+                                {# Tam tarih yoksa ama yıl bilgisi varsa sadece yılı gösterir #}
+                                {{ criminal.birth_year }}
+                            {% else %}
+                                {# Hiçbir veri yoksa #}
+                                Bilinmiyor
+                            {% endif %}
+                        </p>
                         <p class="mb-1"><strong>Son Güncelleme:</strong> {{ criminal.timestamp }}</p>
                     </div>
                 </div>
@@ -120,11 +132,23 @@
             </li>
             <li class="list-group-item d-flex justify-content-between">
                 <span class="text-muted">Boy:</span>
-                <span class="fw-bold">{{ criminal.detail.height or '-' }} cm</span>
+                <span class="fw-bold">
+                    {% if criminal.detail and criminal.detail.height %}
+                        {{ (criminal.detail.height / 100) | round(2) }} m
+                    {% else %}
+                        Bilinmiyor
+                    {% endif %}
+                </span>
             </li>
             <li class="list-group-item d-flex justify-content-between">
-                <span class="text-muted">Ağırlık:</span>
-                <span class="fw-bold">{{ criminal.detail.weight or '-' }} kg</span>
+                <span class="text-muted">Kilo:</span>
+                <span class="fw-bold">
+                    {% if criminal.detail and criminal.detail.weight %}
+                        {{ (criminal.detail.weight / 1000) | round(1) }} kg
+                    {% else %}
+                        Bilinmiyor
+                    {% endif %}
+                </span>
             </li>
             <li class="list-group-item d-flex justify-content-between">
                 <span class="text-muted">Göz Rengi:</span>
@@ -140,7 +164,7 @@
 
                     <div class="mb-3">
                         <span class="badge bg-danger">
-                            ARAYAN ÜLKE: {{ warrants[0].issuing_country_id if warrants else 'Bilinmiyor' }}
+                            ARAYAN ÜLKE: {{ warrants[0].issuing_country_id | ulke_cevir if warrants else 'Bilinmiyor' }}
                         </span>
                     </div>
 

@@ -54,8 +54,12 @@ def process_criminal_detail_and_photos(criminal_obj, links):
             criminal_obj.detail.sex_id = SexEnum[sex_val] if sex_val in SexEnum.__members__ else SexEnum.U
 
             # Fiziksel ve Kimlik Bilgileri
-            criminal_obj.detail.height = float(data.get('height', 0)) if data.get('height') else None
-            criminal_obj.detail.weight = float(data.get('weight', 0)) if data.get('weight') else None
+            height_val = data.get('height')
+            if height_val: criminal_obj.detail.height = int(float(height_val) * 100) # 1.85 (m) -> 185 (cm)
+
+            weight_val = data.get('weight')
+            if weight_val: criminal_obj.detail.weight = int(float(weight_val) * 1000) # 85.5 (kg) -> 85500 (gr)
+
             criminal_obj.detail.eyes_colors_id = data.get('eyes_colors_id')
             criminal_obj.detail.hairs_id = data.get('hairs_id')
             criminal_obj.detail.place_of_birth = data.get('place_of_birth')
@@ -82,6 +86,26 @@ def process_criminal_detail_and_photos(criminal_obj, links):
                                 criminal_obj.photos.append(Photo(image_path=path, picture_id=pic_id))
     except Exception as e:
         print(f"❌ Detay işleme hatası: {e}")
+
+def convert_date_of_birth(data, criminal_obj):
+    dob_str = data.get('date_of_birth')  # Interpol'den gelen string
+
+    if dob_str:
+        # Her zaman yılı ayıklayıp kaydet
+        try:
+            year_part = dob_str[:4]
+            criminal_obj.birth_year = int(year_part)
+        except:
+            criminal_obj.birth_year = None
+
+        # Eğer tam tarihse date_of_birth'e de kaydet
+        if len(dob_str) > 4:
+            try:
+                criminal_obj.date_of_birth = datetime.strptime(dob_str.replace("-", "/"), "%Y/%m/%d").date()
+            except:
+                criminal_obj.date_of_birth = None
+        else:
+            criminal_obj.date_of_birth = None
 
 
 def consume_queue(app):
@@ -141,12 +165,12 @@ def consume_queue(app):
                                     entity_id=entity_id,
                                     name=name,
                                     forename=person.get('forename'),
-                                    date_of_birth=person.get('date_of_birth'),  # main.json'dan
                                     nationalities=nationalities,
                                     thumbnail_path=thumb_path,
                                     status="NEW",
                                     alarm=True
                                 )
+                                convert_date_of_birth(person, new_criminal)
                                 db.session.add(new_criminal)
                                 db.session.flush()  # ID almak için
 
