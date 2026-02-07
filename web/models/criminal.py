@@ -2,7 +2,7 @@ from extensions import db
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, Boolean, DateTime, func, ARRAY, Date
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
@@ -26,8 +26,8 @@ class Criminal(db.Model):
         default=CriminalStatus.NEW,
         nullable=False
     )
-    alarm: Mapped[bool] = mapped_column(Boolean, default=False)
-    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
     # İlişkiler
     detail: Mapped["CriminalDetail"] = relationship(back_populates="master", uselist=False, cascade="all, delete-orphan")
@@ -40,6 +40,14 @@ class Criminal(db.Model):
             return f"{MINIO_PUBLIC_URL}/{BUCKET_NAME}/{self.thumbnail_path}"
         return None
 
+    @property
+    def is_alarm_active(self):
+        #Eğer criminal "UPDATED" ise ve güncelleme üzerinden 60 saniye geçmemişse alarm aktif olsun
+        if self.status == CriminalStatus.UPDATED and self.updated_at:
+            return (datetime.now(timezone.utc) - self.updated_at).total_seconds() <= 60
+        return False
+
     __table_args__ = (
         db.Index('idx_name_forename', 'name', 'forename'),  # İki kolonu birleştiren tek indeks
     )
+

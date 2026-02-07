@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="30">
-    <title>Interpol Takip Paneli</title>
+{% extends "base.html" %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block title %}Interpol Takip Paneli{% endblock %}
+
+{% block extra_head %}
+    <meta http-equiv="refresh" content="30">
+{% endblock %}
+
+{% block extra_css %}
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
     <style>
@@ -20,10 +20,9 @@
             animation: blink 1s infinite;
         }
     </style>
-</head>
-<body class="bg-light">
+{% endblock %}
 
-    <div class="container py-5">
+{% block content %}
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -48,12 +47,13 @@
                                 <th scope="col" class="py-3">İsim</th>
                                 <th scope="col" class="py-3">Uyruk</th>
                                 <th scope="col" class="py-3">Tespit Zamanı</th>
+                                <th scope="col" class="py-3">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for criminal in criminals %}
 
-                            <tr class="{% if criminal.alarm == True %}table-danger border-danger{% endif %}">
+                            <tr class="{% if criminal.is_alarm_active == True %}table-danger border-danger{% endif %}">
 
                                 <td>
                                     {% if criminal.image_url %}
@@ -75,22 +75,18 @@
                                     <span class="fw-bold font-monospace">#{{ criminal.entity_id }}</span>
 
                                     <div style="font-size: 0.8rem;" class="text-muted mt-1">
-                                        Alarm: {{ criminal.alarm }}
+                                        Alarm: {{ criminal.is_alarm_active }}
                                     </div>
 
-                                    {% if criminal.alarm == True %}
+                                    {% if criminal.is_alarm_active == True %}
                                         <span class="badge bg-danger yanip-sonen-badge mt-1">
                                             🔔 GÜNCELLENDİ
                                         </span>
                                     {% endif %}
                                 </td>
 
-                                <td class="fw-semibold">{{ criminal.name }}
-                                    <a href="{{ url_for('main.detail_page', entity_id=criminal.entity_id) }}"
-                                       class="btn btn-sm btn-outline-danger ms-2"
-                                       target="_blank">
-                                       🔍 İncele
-                                    </a>
+                                <td class="fw-semibold">
+                                    {{ criminal.name }}
                                 </td>
 
                                 <td>
@@ -100,12 +96,46 @@
                                 </td>
 
                                 <td class="text-muted small">
-                                    {{ criminal.timestamp }}
+                                    {{ criminal.updated_at.strftime('%d.%m.%Y %H:%M:%S') }}
                                 </td>
+
+                                <td class="text-end" style="white-space: nowrap;">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="{{ url_for('main.detail_page', entity_id=criminal.entity_id) }}" 
+                                           class="btn btn-sm btn-outline-primary border-0" 
+                                           target="_blank" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Görüntüle">
+                                            <i class="bi bi-eye-fill fs-5"></i>
+                                        </a>
+                                    
+                                        <a href="{{ url_for('main.edit_criminal', entity_id=criminal.entity_id) }}" 
+                                           class="btn btn-sm btn-outline-warning border-0" 
+                                           target="_blank"
+                                           data-bs-toggle="tooltip" 
+                                           title="Düzenle">
+                                            <i class="bi bi-pencil-fill fs-5"></i>
+                                        </a>
+                                    
+                                        <form id="delete-form-{{ criminal.entity_id }}" method="POST" action="{{ url_for('main.delete_criminal', entity_id=criminal.entity_id) }}" style="display:inline;">
+                                            {% if csrf_token is defined %}
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            {% endif %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger border-0" 
+                                                    onclick="confirmDelete('{{ criminal.entity_id }}')"
+                                                    data-bs-toggle="tooltip" 
+                                                    title="Kaydı Sil">
+                                                <i class="bi bi-trash3-fill fs-5"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                                
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     Henüz veri gelmedi veya veritabanı boş...
                                 </td>
                             </tr>
@@ -116,26 +146,66 @@
             </div>
         </div>
 
-        <div class="text-center text-muted mt-4 small">
-            <p>Interpol Project Dashboard &copy; 2024</p>
-        </div>
-
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block extra_scripts %}
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
+    function confirmDelete(entityId) {
+        if (confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
+            var form = document.getElementById('delete-form-' + entityId);
+            if (form) {
+                form.submit();
+            } else {
+                alert('Silme formu bulunamadı.');
+            }
+        }
+    }
+
     $(document).ready(function() {
         $('#criminal_table').DataTable({
             stateSave: true,
-
             order: [[ 4, "desc" ]]
         });
-    });
-</script>
 
-</body>
-</html>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Toast rendering logic
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                var toastContainer = document.createElement('div');
+                toastContainer.className = "position-fixed top-0 end-0 p-3";
+                toastContainer.style.zIndex = "1080";
+                document.body.appendChild(toastContainer);
+
+                {% for category, message in messages %}
+                    {% set toast_class = 'success' if category == 'success' else 'danger' if category in ['danger','error'] else 'info' %}
+                    var toastHtml = `
+                        <div class="toast align-items-center text-bg-{{ toast_class }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+                            <div class="d-flex">
+                                <div class="toast-body">{{ message }}</div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>`;
+                    toastContainer.innerHTML += toastHtml;
+                {% endfor %}
+
+                var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+                toastElList.forEach(function (el) { 
+                    var t = new bootstrap.Toast(el); 
+                    t.show(); 
+                });
+            {% endif %}
+        {% endwith %}
+    });
+    </script>
+{% endblock %}

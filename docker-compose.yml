@@ -41,6 +41,7 @@ services:
       - DB_NAME=interpol.db
       - FLASK_ENV=development
       - PYTHONPATH=/app
+      - SECRET_KEY=f0f1598b3fd3fc29a8dab0cb6a9ae29205369b364b4c94bd
     ports:
       - "5000:5000"
     depends_on:

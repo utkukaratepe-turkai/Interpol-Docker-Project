@@ -5,9 +5,11 @@ import requests
 from io import BytesIO
 from datetime import datetime
 from extensions import db, minio_client, BUCKET_NAME
-from models.criminal import Criminal
+from models.criminal import Criminal, CriminalStatus
 from models.criminal_detail import CriminalDetail, SexEnum
 from models.photo import Photo
+import threading
+from datetime import timedelta, timezone
 
 # Sabitler
 RABBIT_HOST = "rabbitmq"
@@ -167,8 +169,7 @@ def consume_queue(app):
                                     forename=person.get('forename'),
                                     nationalities=nationalities,
                                     thumbnail_path=thumb_path,
-                                    status="NEW",
-                                    alarm=True
+                                    status="NEW"
                                 )
                                 convert_date_of_birth(person, new_criminal)
                                 db.session.add(new_criminal)
@@ -195,3 +196,33 @@ def consume_queue(app):
                 except:
                     pass
             time.sleep(5)
+
+def start_sweeper(app):
+    def sweep():
+        with app.app_context(): # Veritabanı işlemleri için Flask context şart
+            while True:
+                try:
+                    # 60 saniye öncesinin zaman damgasını al
+                    expiry_limit = datetime.now(timezone.utc) - timedelta(seconds=60)
+                    
+                    # TEK SORGU: Süresi dolmuş tüm UPDATED kayıtlarını NEW yap
+                    # Bu işlem veritabanı seviyesinde toplu (batch) yapılır, çok hızlıdır.
+                    affected_rows = Criminal.query.filter(
+                        Criminal.status == CriminalStatus.UPDATED,
+                        Criminal.updated_at <= expiry_limit
+                    ).update({Criminal.status: CriminalStatus.NEW}, synchronize_session=False)
+                    
+                    if affected_rows > 0:
+                        db.session.commit()
+                        print(f"[Sweeper] {affected_rows} kayıt NEW durumuna çekildi.")
+                    
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"[Sweeper] Hata: {e}")
+                
+                # 15 saniyede bir kontrol et (Sunucuyu yormaz)
+                time.sleep(15)
+
+    # Thread'i "daemon" olarak başlat (Uygulama kapanınca bu da kapanır)
+    thread = threading.Thread(target=sweep, daemon=True)
+    thread.start()

@@ -6,232 +6,862 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .bilinmiyor-text { color: #aaa; font-style: italic; }
-        .card-header-custom {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dc3545;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        :root {
+            --linkedin-primary: #2563eb;
+            --linkedin-secondary: #dbeafe;
+            --linkedin-text: #1e293b;
+            --linkedin-text-light: #64748b;
+            --text-danger: #dc2626;
+            --text-muted: #94a3b8;
+            --bg-primary: #f0f9ff;
+            --bg-secondary: #e0f2fe;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
         }
-        .gallery-img { transition: transform 0.3s ease; cursor: pointer; }
-        .gallery-img:hover { transform: scale(1.05); z-index: 10; }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+            color: var(--linkedin-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Main Container */
+        .container-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+
+        /* Two Column Layout */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+        }
+
+        /* Left Column - Photos */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Main Thumbnail */
+        .thumbnail-container {
+            background: white;
+            border-radius: 12px;
+            overflow: visible;
+            box-shadow: 0 4px 6px rgba(2, 8, 23, 0.08), 0 1px 3px rgba(2, 8, 23, 0.06);
+            padding: 24px 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Fixed-size circular avatar for the main thumbnail */
+        .profile-img {
+            width: 240px;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            border-radius: 50%;
+            border: 6px solid var(--card-bg);
+            box-shadow: 0 6px 18px rgba(2,8,23,0.12);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .profile-img {
+                width: 160px;
+                height: 160px;
+            }
+        }
+
+        /* Thumbnail Info */
+        .thumbnail-info {
+            padding: 20px;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--linkedin-text);
+            margin: 0 0 8px 0;
+            line-height: 1.2;
+        }
+
+        .profile-status {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .profile-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .profile-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-new {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-updated {
+            background-color: #fef3c7;
+            color: #78350f;
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .entity-id {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Gallery Section - Right Under Thumbnail */
+        .gallery-section {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(2, 8, 23, 0.08), 0 1px 3px rgba(2, 8, 23, 0.06);
+            border: 1px solid var(--border-color);
+        }
+
+        .gallery-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--linkedin-text);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            aspect-ratio: 1;
+            cursor: pointer;
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            border: 1px solid var(--border-color);
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            box-shadow: 0 8px 12px rgba(37, 99, 235, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.08);
+        }
+
+        .gallery-item-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .gallery-item:hover .gallery-item-overlay {
+            opacity: 1;
+        }
+
+        /* Right Column - Information */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Section Card */
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(2, 8, 23, 0.08), 0 1px 3px rgba(2, 8, 23, 0.06);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-card-header {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+            padding: 16px 24px;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--linkedin-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-body {
+            padding: 24px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+            align-items: start;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--linkedin-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: var(--linkedin-text);
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .badge-tag {
+            display: inline-block;
+            background-color: #f0f9ff;
+            color: var(--linkedin-primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Charges Section */
+        .charge-item {
+            padding: 12px;
+            background: #f0f9ff;
+            border-left: 4px solid var(--linkedin-primary);
+            margin-bottom: 12px;
+            border-radius: 6px;
+        }
+
+        .charge-item-title {
+            font-weight: 600;
+            color: var(--linkedin-text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .charge-translation {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #60a5fa;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Close Button */
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid var(--border-color);
+            color: var(--linkedin-text);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(2, 8, 23, 0.1);
+        }
+
+        .close-btn:hover {
+            background: var(--linkedin-primary);
+            color: white;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.15);
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 1024px) {
+            .profile-layout {
+                grid-template-columns: 280px 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-layout {
+                grid-template-columns: 1fr;
+            }
+            .gallery-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .info-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+
+        /* Modal Styles */
+        .photo-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .photo-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            display: block;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.7);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 2001;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 2001;
+        }
+
+        .modal-nav:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .modal-prev {
+            left: 16px;
+        }
+
+        .modal-next {
+            right: 16px;
+        }
+
+        .modal-counter {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2001;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
 
-<div class="container py-5">
+<!-- Close Button -->
+<button onclick="window.close()" class="close-btn">
+    <i class="bi bi-x"></i>
+</button>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold text-danger mb-0">🚨 KIRMIZI BÜLTEN DETAYI</h2>
-            <small class="text-muted">Entity ID: #{{ criminal.entity_id }}</small>
-        </div>
-        <button onclick="window.close()" class="btn btn-outline-dark">✖ Kapat</button>
-    </div>
+<div class="container-main">
+    <div class="profile-layout">
+        <!-- LEFT COLUMN: Photos -->
+        <div class="left-column">
+            <!-- Main Thumbnail -->
+            <div class="thumbnail-container">
+                {% if criminal.image_url %}
+                    <img src="{{ criminal.image_url }}" alt="{{ criminal.name }}" class="profile-img" {% if filtered_photos and filtered_photos|length > 0 %}onclick="openPhotoModal(0)" style="cursor:pointer;"{% else %}style="cursor:default;"{% endif %}>
+                {% else %}
+                    <div class="profile-img bg-secondary d-flex align-items-center justify-content-center" style="color: white; font-size: 96px;">👤</div>
+                {% endif %}
 
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm border-0 text-center h-100">
-                <div class="card-body">
-                    <div class="mb-3 position-relative d-inline-block">
-                        {% if criminal.image_url %}
-                            <img src="{{ criminal.image_url }}"
-                                 class="img-fluid rounded border border-4 border-white shadow"
-                                 style="max-height: 350px; width: 100%; object-fit: cover;">
+                <div class="thumbnail-info">
+                    <h1 class="profile-name">{{ criminal.name }}</h1>
+
+                    <p class="profile-status">
+                        {% set warrants = criminal.detail.arrest_warrants if criminal.detail else [] %}
+                        {% if warrants %}
+                            Wanted by: <strong>{{ warrants[0].issuing_country_id | ulke_cevir if warrants else 'Unknown' }}</strong>
                         {% else %}
-                            <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center shadow" style="height: 300px; width: 100%;">
-                                <span class="display-1">👤</span>
-                            </div>
+                            International Criminal
                         {% endif %}
+                    </p>
 
-                        {% if criminal.status == 'NEW' %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success border border-light p-2">YENİ</span>
-                        {% elif criminal.status == 'UPDATED' %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light p-2">GÜNCELLENDİ</span>
+                    <div class="profile-badges">
+                        {% if criminal.status.name == 'NEW' %}
+                        <span class="profile-badge badge-new">🆕 NEW</span>
+                        {% elif criminal.status.name == 'UPDATED' %}
+                        <span class="profile-badge badge-updated">🔄 UPDATED</span>
                         {% endif %}
+                        <span class="profile-badge badge-danger">⚠️ WANTED</span>
                     </div>
-
-                    <h3 class="fw-bold mt-2">{{ criminal.name }}</h3>
-
-                    <div class="badge bg-secondary text-wrap mb-2">
-                        {% set nats = criminal.nationalities %}
-                        {{ nats | join(', ') | ulke_cevir if nats else 'Bilinmiyor' }}
+                    <div class="entity-id text-muted" style="font-size: 0.9rem;">
+                        <strong>ID:</strong> #{{ criminal.entity_id }}
                     </div>
-
-                    <hr>
-                    <div class="text-start small text-muted">
-                        <p class="mb-1">
-                            <strong>Doğum Tarihi:</strong>
-                            {% if criminal.date_of_birth %}
-                                {# Tam tarih varsa gün.ay.yıl formatında gösterir #}
-                                {{ criminal.date_of_birth.strftime('%d.%m.%Y') }}
-                            {% elif criminal.birth_year %}
-                                {# Tam tarih yoksa ama yıl bilgisi varsa sadece yılı gösterir #}
-                                {{ criminal.birth_year }}
-                            {% else %}
-                                {# Hiçbir veri yoksa #}
-                                Bilinmiyor
-                            {% endif %}
-                        </p>
-                        <p class="mb-1"><strong>Son Güncelleme:</strong> {{ criminal.timestamp }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-8">
-
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header card-header-custom">👤 Kişisel Bilgiler</div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="fw-bold text-secondary small">Adı / Soyadı</label>
-                            <div class="fs-5">{{ criminal.forename }} {{ criminal.name }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="fw-bold text-secondary small">Doğum Yeri</label>
-                            <div class="fs-5">{{ criminal.detail.place_of_birth or 'Bilinmiyor' }}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="fw-bold text-secondary small">Cinsiyet</label>
-                            <div class="fs-5">
-                                {% if criminal.detail and criminal.detail.sex_id %}
-                                    {% if criminal.detail.sex_id.name == 'M' %} Erkek
-                                    {% elif criminal.detail.sex_id.name == 'F' %} Kadın
-                                    {% else %} Bilinmiyor {% endif %}
-                                {% else %}
-                                    Bilinmiyor
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                        <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
-                            <div class="fs-5 d-flex flex-wrap gap-1 mt-1">
-                                {% set langs = criminal.detail.languages_spoken_ids %}
-                                {% if langs and langs|length > 0 %}
-                                    {% for lang in langs %}
-                                        <span class="badge bg-light text-dark border fw-normal">
-                                            {{ lang | dil_cevir if lang | dil_cevir else lang }}
-                                        </span>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted">-</span>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <div class="update-at text-muted" style="font-size: 0.9rem;">
+                        <strong>Update At:</strong> {{ criminal.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}
                     </div>
                 </div>
             </div>
 
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-muted">Cinsiyet:</span>
-                <span class="fw-bold">{{ criminal.detail.sex_id.name if criminal.detail and criminal.detail.sex_id else 'Bilinmiyor' }}</span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-muted">Boy:</span>
-                <span class="fw-bold">
-                    {% if criminal.detail and criminal.detail.height %}
-                        {{ (criminal.detail.height / 100) | round(2) }} m
-                    {% else %}
-                        Bilinmiyor
-                    {% endif %}
-                </span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-muted">Kilo:</span>
-                <span class="fw-bold">
-                    {% if criminal.detail and criminal.detail.weight %}
-                        {{ (criminal.detail.weight / 1000) | round(1) }} kg
-                    {% else %}
-                        Bilinmiyor
-                    {% endif %}
-                </span>
-            </li>
-            <li class="list-group-item d-flex justify-content-between">
-                <span class="text-muted">Göz Rengi:</span>
-                <span class="fw-bold">{{ criminal.detail.eyes_colors_id or 'Bilinmiyor' }}</span>
-            </li>
-        </ul>
-
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-dark text-white fw-bold">⚖️ SUÇLAMA VE YAKALAMA KARARI</div>
-                <div class="card-body">
-
-                    {% set warrants = criminal.detail.arrest_warrants if criminal.detail else [] %}
-
-                    <div class="mb-3">
-                        <span class="badge bg-danger">
-                            ARAYAN ÜLKE: {{ warrants[0].issuing_country_id | ulke_cevir if warrants else 'Bilinmiyor' }}
-                        </span>
-                    </div>
-
-                    <h6 class="fw-bold">Suçlama (Orijinal):</h6>
-
-                    {% if warrants %}
-                        <ul class="list-group list-group-flush">
-                            {# 1. Dış Döngü: Her bir yakalama kararını dön #}
-                            {% for warrant in warrants %}
-
-                                {# 2. İç Mantık: 'charge' metnini al ve satır satır böl (LİSTE MANTIĞI) #}
-                                {% set charge_text = warrant.get('charge', '') %}
-
-                                {% if charge_text %}
-                                    {% for line in charge_text.split('\n') %}
-                                        {% if line.strip() %}
-                                            <li class="list-group-item px-0">
-                                                <div class="d-flex align-items-start">
-                                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
-                                                    <span class="fw-bold text-dark">{{ line }}</span>
-                                                </div>
-                                            </li>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-
-                                {# Çeviri varsa hemen suçun altına ekle #}
-                                {% if warrant.get('charge_translation') %}
-                                    <li class="list-group-item border-0 pt-0 pb-3">
-                                        <div class="bg-light p-2 rounded border border-primary ms-4">
-                                            <small class="fw-bold text-primary d-block">Çeviri:</small>
-                                            <span class="text-secondary small">{{ warrant.get('charge_translation') }}</span>
-                                        </div>
-                                    </li>
-                                {% endif %}
-
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted">Belirtilen bir suçlama bulunmamaktadır.</p>
-                    {% endif %}
-
-                </div>
-            </div>
-
-            {% if criminal.photos %}
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-secondary text-white fw-bold">📷 EKSTRA FOTOĞRAF GALERİSİ ({{ criminal.photos|length }})</div>
-                <div class="card-body">
-                    <div class="row g-2">
-                        {% for photo in criminal.photos %}
-                        <div class="col-6 col-md-3">
-                            <a href="{{ photo.url }}" target="_blank">
-                                <img src="{{ photo.image_url }}" class="img-thumbnail gallery-img shadow-sm"
-                                     style="width: 100%; height: 150px; object-fit: cover;"
-                                     alt="Ekstra Fotoğraf">
-                            </a>
+            <!-- Gallery Photos - Right Under Thumbnail -->
+            {% set filtered_photos = (criminal.photos | rejectattr('image_url', 'equalto', criminal.image_url) | list) if criminal.photos else [] %}
+            {% set main_present = True if criminal.image_url else False %}
+            {% set gallery_count = (filtered_photos|length) %}
+            {% if gallery_count > 0 or main_present %}
+            <div class="gallery-section">
+                <div class="gallery-title">📷 Gallery ({{ gallery_count }})</div>
+                <div class="gallery-container">
+                    {% for photo in filtered_photos %}
+                    <button class="gallery-item" onclick="openPhotoModal({{ loop.index0 }})">
+                        <img src="{{ photo.image_url }}" alt="Photo">
+                        <div class="gallery-item-overlay">
+                            <i class="bi bi-zoom-in" style="font-size: 20px;"></i>
                         </div>
-                        {% endfor %}
-                    </div>
+                    </button>
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
+        </div>
 
+        <!-- RIGHT COLUMN: Information -->
+        <div class="right-column">
+            <!-- Personal Information Section -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="bi bi-person-fill" style="font-size: 18px;"></i>
+                    Personal Information
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Full Name</span>
+                        <span class="info-value">{{ criminal.name or 'Unknown' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date of Birth</span>
+                        <span class="info-value">
+                            {% if criminal.date_of_birth %}
+                                {{ criminal.date_of_birth.strftime('%d.%m.%Y') }}
+                            {% elif criminal.birth_year %}
+                                {{ criminal.birth_year }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Place of Birth</span>
+                        <span class="info-value">{{ criminal.detail.place_of_birth or 'Unknown' }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gender</span>
+                        <span class="info-value">
+                            {% if criminal.detail and criminal.detail.sex_id %}
+                                {% if criminal.detail.sex_id.name == 'M' %}
+                                <span class="badge-tag">Male</span>
+                                {% elif criminal.detail.sex_id.name == 'F' %}
+                                <span class="badge-tag">Female</span>
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Nationalities</span>
+                        <span class="info-value">
+                            {% set nats = criminal.nationalities %}
+                            {% if nats %}
+                                {% for nat in nats %}
+                                    <span class="badge-tag">{{ nat | ulke_cevir if nat | ulke_cevir else nat }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Created At</span>
+                        <span class="info-value">{{ criminal.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Physical Characteristics Section -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="bi bi-eye" style="font-size: 18px;"></i>
+                    Physical Characteristics
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span class="info-label">Height</span>
+                        <span class="info-value">
+                            {% if criminal.detail and criminal.detail.height %}
+                                {{ (criminal.detail.height / 100) | round(2) }} m
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Weight</span>
+                        <span class="info-value">
+                            {% if criminal.detail and criminal.detail.weight %}
+                                {{ (criminal.detail.weight / 1000) | round(1) }} kg
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Eye Color</span>
+                        <span class="info-value">
+                            {% set eyes = criminal.detail.eyes_colors_id %}
+                            {% if eyes and eyes|length > 0 %}
+                                {% for eye in eyes %}
+                                    <span class="badge-tag">{{ eye | goz_cevir_filter if eye | goz_cevir_filter else eye }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Hair Color</span>
+                        <span class="info-value">
+                            {% set hairs = criminal.detail.hairs_id %}
+                            {% if hairs and hairs|length > 0 %}
+                                {% for hair in hairs %}
+                                    <span class="badge-tag">{{ hair | sac_cevir_filter if hair | sac_cevir_filter else hair }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Languages</span>
+                        <span class="info-value">
+                            {% set langs = criminal.detail.languages_spoken_ids %}
+                            {% if langs and langs|length > 0 %}
+                                {% for lang in langs %}
+                                    <span class="badge-tag">{{ lang | dil_cevir if lang | dil_cevir else lang }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Legal Information Section (includes distinguishing marks below) -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="bi bi-scales" style="font-size: 18px;"></i>
+                    Legal Information
+                </div>
+                <div class="info-card-body">
+                    {% set warrants = criminal.detail.arrest_warrants if criminal.detail else [] %}
+
+                    {% if warrants %}
+                        <div style="margin-bottom: 20px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-weight: 600; font-size: 13px;">Issuing Country:</span>
+                            <span class="profile-badge badge-danger">
+                                🌍 {{ warrants[0].issuing_country_id | ulke_cevir if warrants else 'Unknown' }}
+                            </span>
+                        </div>
+
+                        {% for warrant in warrants %}
+                            {% set charge_text = warrant.get('charge', '') %}
+                            {% if charge_text %}
+                                {% for line in charge_text.split('\n') %}
+                                    {% if line.strip() %}
+                                        <div class="charge-item">
+                                            <div class="charge-item-title">
+                                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                                {{ line }}
+                                            </div>
+                                            {% if warrant.get('charge_translation') %}
+                                                <div class="charge-translation">
+                                                    <strong>Translation:</strong> {{ warrant.get('charge_translation') }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div style="padding: 20px; text-align: center; color: var(--text-muted);">
+                            No charges specified.
+                        </div>
+                    {% endif %}
+
+                    <!-- Distinguishing marks shown within Legal Information to avoid duplication -->
+                    <div style="margin-top:18px; border-top:1px dashed #eef2f7; padding-top:12px;">
+                        <div class="info-row">
+                            <span class="info-label">Distinguishing Marks</span>
+                            <span class="info-value">
+                                {% if criminal.detail and criminal.detail.distinguishing_marks %}
+                                    {{ criminal.detail.distinguishing_marks | e | replace('\n', '<br/>') | safe }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Spacing -->
+    <div style="height: 40px;"></div>
 </div>
+
+<!-- Photo Modal -->
+<div id="photoModal" class="photo-modal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closePhotoModal()">
+            <i class="bi bi-x"></i>
+        </button>
+        
+        <img id="modalImage" src="" alt="Full size photo" class="modal-image">
+        
+        {% set total_photos = (filtered_photos|length if filtered_photos is defined else (criminal.photos|length if criminal.photos else 0)) %}
+        {% if total_photos > 1 %}
+        <button class="modal-nav modal-prev" onclick="previousPhoto()">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="modal-nav modal-next" onclick="nextPhoto()">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        <div class="modal-counter">
+            <span id="currentPhotoIndex">1</span> / <span id="totalPhotos">{{ total_photos }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Photo modal data (only extra photos - thumbnail excluded)
+    const photos = [
+        {% if filtered_photos and filtered_photos|length > 0 %}
+            {% for photo in filtered_photos %}
+            { url: "{{ photo.image_url }}", link: "{{ photo.url }}" }{{ "," if not loop.last else "" }}
+            {% endfor %}
+        {% endif %}
+    ];
+    
+    let currentPhotoIndex = 0;
+
+    function openPhotoModal(index) {
+        currentPhotoIndex = index;
+        const modal = document.getElementById('photoModal');
+        const modalImage = document.getElementById('modalImage');
+        const currentEl = document.getElementById('currentPhotoIndex');
+        const totalEl = document.getElementById('totalPhotos');
+        
+        if (photos.length > 0 && photos[index]) {
+            modalImage.src = photos[currentPhotoIndex].url;
+            if (currentEl) currentEl.textContent = currentPhotoIndex + 1;
+            if (totalEl) totalEl.textContent = photos.length;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closePhotoModal() {
+        const modal = document.getElementById('photoModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function nextPhoto() {
+        if (photos.length > 0) {
+            currentPhotoIndex = (currentPhotoIndex + 1) % photos.length;
+            const modalImage = document.getElementById('modalImage');
+            const currentEl = document.getElementById('currentPhotoIndex');
+            modalImage.src = photos[currentPhotoIndex].url;
+            if (currentEl) currentEl.textContent = currentPhotoIndex + 1;
+        }
+    }
+
+    function previousPhoto() {
+        if (photos.length > 0) {
+            currentPhotoIndex = (currentPhotoIndex - 1 + photos.length) % photos.length;
+            const modalImage = document.getElementById('modalImage');
+            const currentEl = document.getElementById('currentPhotoIndex');
+            modalImage.src = photos[currentPhotoIndex].url;
+            if (currentEl) currentEl.textContent = currentPhotoIndex + 1;
+        }
+    }
+
+    // Close modal when clicking outside the image
+    document.getElementById('photoModal').addEventListener('click', function(event) {
+        if (event.target === this) {
+            closePhotoModal();
+        }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        const modal = document.getElementById('photoModal');
+        if (modal.classList.contains('active')) {
+            if (event.key === 'Escape') {
+                closePhotoModal();
+            } else if (event.key === 'ArrowRight') {
+                nextPhoto();
+            } else if (event.key === 'ArrowLeft') {
+                previousPhoto();
+            }
+        }
+    });
+</script>
 
 </body>
 </html>
