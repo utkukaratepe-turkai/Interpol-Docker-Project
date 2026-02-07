@@ -72,19 +72,19 @@
         <tbody>
             {% for criminal in criminals %}
 
-            <tr class="{% if criminal.alarm == True %}alarm-satiri{% endif %}">
+            <tr class="{% if criminal.is_alarm_active == True %}alarm-satiri{% endif %}">
                 <td>
                     <strong>{{ criminal.entity_id }}</strong>
 
-                    <br><strong style="color:blue;">(Alarm Değişkeni: {{ criminal.alarm }})</strong>
+                    <br><strong style="color:blue;">(Alarm Değişkeni: {{ criminal.is_alarm_active }})</strong>
 
-                    {% if criminal.alarm == True %}
+                    {% if criminal.is_alarm_active == True %}
                         <br><span class="yanip-sonen-uyari">🔔 GÜNCELLENDİ!</span>
                     {% endif %}
                 </td>
                 <td>{{ criminal.name }}</td>
                 <td>{{ criminal.nationalities }}</td>
-                <td>{{ criminal.timestamp }}</td>
+                <td>{{ criminal.created_at }}</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>John Doe - Detay Dosyası</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .bilinmiyor-text { color: #aaa; font-style: italic; }
+        .card-header-custom {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dc3545;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .gallery-img { transition: transform 0.3s ease; cursor: pointer; }
+        .gallery-img:hover { transform: scale(1.05); z-index: 10; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger mb-0">🚨 KIRMIZI BÜLTEN DETAYI</h2>
+            <small class="text-muted">Entity ID: #12345</small>
+        </div>
+        <button onclick="window.close()" class="btn btn-outline-dark">✖ Kapat</button>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 text-center h-100">
+                <div class="card-body">
+                    <div class="mb-3 position-relative d-inline-block">
+                        <img src="https://via.placeholder.com/600x800.png?text=John+Doe"
+                             class="img-fluid rounded border border-4 border-white shadow"
+                             style="max-height: 350px; width: 100%; object-fit: cover;">
+
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success border border-light p-2">YENİ</span>
+                    </div>
+
+                    <h3 class="fw-bold mt-2">John Doe</h3>
+
+                    <div class="badge bg-secondary text-wrap mb-2">Türkiye, United States</div>
+
+                    <hr>
+                    <div class="text-start small text-muted">
+                        <p class="mb-1">
+                            <strong>Doğum Tarihi:</strong>
+                            12.05.1980
+                        </p>
+                        <p class="mb-1"><strong>Son Güncelleme:</strong> 2026-02-05 12:34</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header card-header-custom">👤 Kişisel Bilgiler</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Adı / Soyadı</label>
+                            <div class="fs-5">John John Doe</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Doğum Yeri</label>
+                            <div class="fs-5">Istanbul</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Cinsiyet</label>
+                            <div class="fs-5">Erkek</div>
+                        </div>
+                        <div class="col-md-6">
+                        <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
+                            <div class="fs-5 d-flex flex-wrap gap-1 mt-1">
+                                <span class="badge bg-light text-dark border fw-normal">Turkish</span>
+                                <span class="badge bg-light text-dark border fw-normal">English</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Cinsiyet:</span>
+                <span class="fw-bold">M</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Boy:</span>
+                <span class="fw-bold">1.80 m</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Kilo:</span>
+                <span class="fw-bold">75.0 kg</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Göz Rengi:</span>
+                <span class="fw-bold">Brown</span>
+            </li>
+        </ul>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white fw-bold">⚖️ SUÇLAMA VE YAKALAMA KARARI</div>
+                <div class="card-body">
+
+                    <div class="mb-3">
+                        <span class="badge bg-danger">ARAYAN ÜLKE: Türkiye</span>
+                    </div>
+
+                    <h6 class="fw-bold">Suçlama (Orijinal):</h6>
+
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
+                                <span class="fw-bold text-dark">Hırsızlık</span>
+                            </div>
+                        </li>
+                        <li class="list-group-item border-0 pt-0 pb-3">
+                            <div class="bg-light p-2 rounded border border-primary ms-4">
+                                <small class="fw-bold text-primary d-block">Çeviri:</small>
+                                <span class="text-secondary small">Theft</span>
+                            </div>
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-secondary text-white fw-bold">📷 EKSTRA FOTOĞRAF GALERİSİ (2)</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3">
+                            <a href="https://via.placeholder.com/1200x1600.png?text=Photo+1" target="_blank">
+                                <img src="https://via.placeholder.com/400x400.png?text=Photo+1" class="img-thumbnail gallery-img shadow-sm"
+                                     style="width: 100%; height: 150px; object-fit: cover;" alt="Ekstra Fotoğraf">
+                            </a>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <a href="https://via.placeholder.com/1200x1600.png?text=Photo+2" target="_blank">
+                                <img src="https://via.placeholder.com/400x400.png?text=Photo+2" class="img-thumbnail gallery-img shadow-sm"
+                                     style="width: 100%; height: 150px; object-fit: cover;" alt="Ekstra Fotoğraf">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

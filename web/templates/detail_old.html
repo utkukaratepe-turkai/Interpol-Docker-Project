@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ criminal.name }} - Detay Dosyası</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --linkedin-primary: #0a66c2;
+            --linkedin-secondary: #e7e7e7;
+            --linkedin-text: #000000de;
+            --linkedin-text-light: #65676b;
+            --text-danger: #b93c3c;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--linkedin-text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        }
+
+        /* Header Cover Section */
+        .profile-cover {
+            background: linear-gradient(135deg, #0a66c2 0%, #004182 100%);
+            height: 200px;
+            position: relative;
+        }
+
+        /* Profile Info Card */
+        .profile-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+            margin-top: -60px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            object-fit: cover;
+            margin: 0 auto -60px;
+            display: block;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .profile-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--linkedin-text);
+            margin-top: 60px;
+            margin-bottom: 8px;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 8px 4px;
+        }
+
+        .badge-new {
+            background-color: #d1f0e8;
+            color: #0b7f5f;
+        }
+
+        .badge-updated {
+            background-color: #fff4ce;
+            color: #7a5e1f;
+        }
+
+        .badge-danger {
+            background-color: #ffe5e5;
+            color: #8b3a3a;
+        }
+
+        /* Section Card */
+        .info-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .info-card-header {
+            background-color: #f2f2f2;
+            padding: 16px;
+            border-bottom: 1px solid var(--linkedin-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--linkedin-text);
+        }
+
+        .info-card-body {
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--linkedin-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: var(--linkedin-text);
+            font-weight: 500;
+        }
+
+        .badge-tag {
+            display: inline-block;
+            background-color: #f0f0f0;
+            color: var(--linkedin-text);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            border: 1px solid var(--linkedin-secondary);
+        }
+
+        /* Gallery */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .gallery-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            aspect-ratio: 1;
+            cursor: pointer;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-item-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .gallery-item:hover .gallery-item-overlay {
+            opacity: 1;
+        }
+
+        /* Charges Section */
+        .charge-item {
+            padding: 16px;
+            background: #f9f9f9;
+            border-left: 4px solid var(--linkedin-primary);
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+
+        .charge-item-title {
+            font-weight: 600;
+            color: var(--linkedin-text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .charge-translation {
+            margin-top: 12px;
+            padding: 12px;
+            background: white;
+            border-left: 3px solid var(--linkedin-primary);
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--linkedin-text-light);
+            font-style: italic;
+        }
+
+        /* Close Button */
+        .close-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid var(--linkedin-secondary);
+            color: var(--linkedin-text);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .close-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .container-linkedin {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-name {
+                font-size: 24px;
+            }
+            .profile-cover {
+                height: 140px;
+            }
+            .profile-img {
+                width: 90px;
+                height: 90px;
+                margin: 0 auto -45px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger mb-0">🚨 KIRMIZI BÜLTEN DETAYI</h2>
+            <small class="text-muted">Entity ID: #{{ criminal.entity_id }}</small>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 text-center h-100">
+                <div class="card-body">
+                    <div class="mb-3 position-relative d-inline-block">
+                        {% if criminal.image_url %}
+                            <img src="{{ criminal.image_url }}"
+                                 class="img-fluid rounded border border-4 border-white shadow"
+                                 style="max-height: 350px; width: 100%; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center shadow" style="height: 300px; width: 100%;">
+                                <span class="display-1">👤</span>
+                            </div>
+                        {% endif %}
+
+                        {% if criminal.status == 'NEW' %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success border border-light p-2">YENİ</span>
+                        {% elif criminal.status == 'UPDATED' %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark border border-light p-2">GÜNCELLENDİ</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="fw-bold mt-2">{{ criminal.name }}</h3>
+
+                    <div class="badge bg-secondary text-wrap mb-2">
+                        {% set nats = criminal.nationalities %}
+                        {{ nats | join(', ') | ulke_cevir if nats else 'Bilinmiyor' }}
+                    </div>
+
+                    <hr>
+                    <div class="text-start small text-muted">
+                        <p class="mb-1">
+                            <strong>Doğum Tarihi:</strong>
+                            {% if criminal.date_of_birth %}
+                                {# Tam tarih varsa gün.ay.yıl formatında gösterir #}
+                                {{ criminal.date_of_birth.strftime('%d.%m.%Y') }}
+                            {% elif criminal.birth_year %}
+                                {# Tam tarih yoksa ama yıl bilgisi varsa sadece yılı gösterir #}
+                                {{ criminal.birth_year }}
+                            {% else %}
+                                {# Hiçbir veri yoksa #}
+                                Bilinmiyor
+                            {% endif %}
+                        </p>
+                        <p class="mb-1"><strong>Son Güncelleme:</strong> {{ criminal.updated_at }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header card-header-custom">👤 Kişisel Bilgiler</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Adı / Soyadı</label>
+                            <div class="fs-5">{{ criminal.forename }} {{ criminal.name }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Doğum Yeri</label>
+                            <div class="fs-5">{{ criminal.detail.place_of_birth or 'Bilinmiyor' }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold text-secondary small">Cinsiyet</label>
+                            <div class="fs-5">
+                                {% if criminal.detail and criminal.detail.sex_id %}
+                                    {% if criminal.detail.sex_id.name == 'M' %} Erkek
+                                    {% elif criminal.detail.sex_id.name == 'F' %} Kadın
+                                    {% else %} Bilinmiyor {% endif %}
+                                {% else %}
+                                    Bilinmiyor
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                        <label class="fw-bold text-secondary small">Konuştuğu Diller</label>
+                            <div class="fs-5 d-flex flex-wrap gap-1 mt-1">
+                                {% set langs = criminal.detail.languages_spoken_ids %}
+                                {% if langs and langs|length > 0 %}
+                                    {% for lang in langs %}
+                                        <span class="badge bg-light text-dark border fw-normal">
+                                            {{ lang | dil_cevir if lang | dil_cevir else lang }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Cinsiyet:</span>
+                <span class="fw-bold">{{ criminal.detail.sex_id.name if criminal.detail and criminal.detail.sex_id else 'Bilinmiyor' }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Boy:</span>
+                <span class="fw-bold">
+                    {% if criminal.detail and criminal.detail.height %}
+                        {{ (criminal.detail.height / 100) | round(2) }} m
+                    {% else %}
+                        Bilinmiyor
+                    {% endif %}
+                </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Kilo:</span>
+                <span class="fw-bold">
+                    {% if criminal.detail and criminal.detail.weight %}
+                        {{ (criminal.detail.weight / 1000) | round(1) }} kg
+                    {% else %}
+                        Bilinmiyor
+                    {% endif %}
+                </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span class="text-muted">Göz Rengi:</span>
+                <span class="fw-bold">{{ criminal.detail.eyes_colors_id or 'Bilinmiyor' }}</span>
+            </li>
+        </ul>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white fw-bold">⚖️ SUÇLAMA VE YAKALAMA KARARI</div>
+                <div class="card-body">
+
+                    {% set warrants = criminal.detail.arrest_warrants if criminal.detail else [] %}
+
+                    <div class="mb-3">
+                        <span class="badge bg-danger">
+                            ARAYAN ÜLKE: {{ warrants[0].issuing_country_id | ulke_cevir if warrants else 'Bilinmiyor' }}
+                        </span>
+                    </div>
+
+                    <h6 class="fw-bold">Suçlama (Orijinal):</h6>
+
+                    {% if warrants %}
+                        <ul class="list-group list-group-flush">
+                            {# 1. Dış Döngü: Her bir yakalama kararını dön #}
+                            {% for warrant in warrants %}
+
+                                {# 2. İç Mantık: 'charge' metnini al ve satır satır böl (LİSTE MANTIĞI) #}
+                                {% set charge_text = warrant.get('charge', '') %}
+
+                                {% if charge_text %}
+                                    {% for line in charge_text.split('\n') %}
+                                        {% if line.strip() %}
+                                            <li class="list-group-item px-0">
+                                                <div class="d-flex align-items-start">
+                                                    <i class="bi bi-exclamation-triangle-fill text-danger me-2 mt-1"></i>
+                                                    <span class="fw-bold text-dark">{{ line }}</span>
+                                                </div>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+
+                                {# Çeviri varsa hemen suçun altına ekle #}
+                                {% if warrant.get('charge_translation') %}
+                                    <li class="list-group-item border-0 pt-0 pb-3">
+                                        <div class="bg-light p-2 rounded border border-primary ms-4">
+                                            <small class="fw-bold text-primary d-block">Çeviri:</small>
+                                            <span class="text-secondary small">{{ warrant.get('charge_translation') }}</span>
+                                        </div>
+                                    </li>
+                                {% endif %}
+
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">Belirtilen bir suçlama bulunmamaktadır.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {% if criminal.photos %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-secondary text-white fw-bold">📷 EKSTRA FOTOĞRAF GALERİSİ ({{ criminal.photos|length }})</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        {% for photo in criminal.photos %}
+                        <div class="col-6 col-md-3">
+                            <a href="{{ photo.url }}" target="_blank">
+                                <img src="{{ photo.image_url }}" class="img-thumbnail gallery-img shadow-sm"
+                                     style="width: 100%; height: 150px; object-fit: cover;"
+                                     alt="Ekstra Fotoğraf">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
